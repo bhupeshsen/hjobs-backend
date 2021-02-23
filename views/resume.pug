@@ -1,0 +1,107 @@
+doctype html
+head
+  meta(charset='UTF-8')
+  meta(name='viewport' content='width=device-width, initial-scale=1.0')
+  title Resume
+  style
+    include resume.css
+.main-container
+  .left-container
+    .img-container
+      img(src=photo alt='')
+    h2(style='margin-top: 15px;') CONTACT ME AT
+    div
+      b(style='padding:15px;') Address
+      | :
+      p(style='margin-top: 3px;')
+        | #{address}
+    div(style='padding:10px;')
+      b EMAIL :
+      br
+      |             #{email}
+    div(style='padding:10px;')
+      b MOBILE :
+      br
+      |             #{mobile}
+    div(style='padding:10px;')
+      b
+        | PORTFOLIO :
+      br
+      |             #{website}
+    div(style='padding:10px;')
+      b LINKEDIN :
+      br
+      | #{linkedin}
+    h2(style=' margin-top: 15px;')
+      | SKILL SUMMARY
+    each skill in skills
+      p #{skill}
+    h2(style=' margin-top: 15px;')
+      | AWARDS RECEIVED
+    each award in awards
+      p #{awards}
+    h2(style=' margin-top: 15px;') 
+      | HOBBIES
+    each item in hobbies
+      p #{item}
+  .right-container
+    h1 #{name}
+    hr
+    h4 PERSONAL PROFILE
+    p #{about}
+    -if (typeof workExperience != 'undefined'){ 
+    h4 WORK EXPERIENCE
+    each work in workExperience
+      b Designation
+      | : #{work['designation']}
+      br
+      b Company
+      | : #{work['company']}
+      br
+      b Role
+      | : #{work['role']}
+      br
+      b Duration
+      | : #{work['duration']}
+      br
+      br
+    - }
+    h4 EDUCATIONAL HISTORY
+    - if(typeof education['university'] !== 'undefined'){
+      b University
+      | : #{education['university']['name']}
+      br
+      b Passing Year
+      | : #{education['university']['passingYear']}
+      br
+      b CGPA / Percentage
+      | : #{education['university']['cgpaOrPercentage']} %
+      br
+      br
+    - }
+    - if(typeof education['highSchool'] !== 'undefined'){
+      b HSSC
+      | : #{education['highSchool']['name']}
+      br
+      b Passing Year
+      | : #{education['highSchool']['passingYear']}
+      br
+      b Board
+      | : #{education['highSchool']['board']}
+      br
+      b CGPA / Percentage
+      | : #{education['highSchool']['cgpaOrPercentage']} %
+      br
+      br
+    - }
+    b SSC
+    | : #{education['school']['name']}
+    br
+    b Passing Year
+    | : #{education['school']['passingYear']}
+    br
+    b Board
+    | : #{education['school']['board']}
+    br
+    b CGPA / Percentage
+    | : #{education['school']['cgpaOrPercentage']} %

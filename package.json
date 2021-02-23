@@ -1,0 +1,37 @@
+{
+  "name": "mongodb-demo",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "TZ='IST' nodemon ./bin/www"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.19.0",
+    "connect-mongo": "^3.2.0",
+    "cookie-parser": "~1.4.4",
+    "cors": "^2.8.5",
+    "debug": "~2.6.9",
+    "express": "~4.16.1",
+    "express-session": "^1.17.1",
+    "firebase-admin": "^9.3.0",
+    "html-pdf": "^2.2.0",
+    "http-errors": "~1.6.3",
+    "ifsc": "^1.5.5",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^5.10.2",
+    "mongoose-unique-validator": "^2.0.3",
+    "morgan": "~1.9.1",
+    "multer": "^1.4.2",
+    "node-cron": "^2.0.3",
+    "node-mailjet": "^3.3.1",
+    "nodemon": "^2.0.4",
+    "passport": "^0.4.1",
+    "passport-jwt": "^4.0.0",
+    "passport-local": "^1.0.0",
+    "pug": "2.0.0-beta11",
+    "puppeteer": "^5.5.0",
+    "razorpay": "^2.0.6",
+    "request": "^2.88.2"
+  }
+}
