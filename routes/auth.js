@@ -178,12 +178,6 @@ router.post('/provider/google', (req, res) => {
         saveData(user, res)
       }
 
-      User.findOneAndUpdate({ _id: user._id },
-        { fcmToken: req.body.fcmToken },
-        { password: 0 }, (err) => {
-          if (err) { return res.status(401).json(err); }
-        });
-
       // JWT Token
       const JWTToken = jwt.sign({
         _id: user._id,
