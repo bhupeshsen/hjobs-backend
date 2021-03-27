@@ -31,6 +31,7 @@
     "passport-local": "^1.0.0",
     "pug": "2.0.0-beta11",
     "puppeteer": "^5.5.0",
+    "rand-token": "^1.0.1",
     "razorpay": "^2.0.6",
     "request": "^2.88.2"
   }

@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const multer = require('multer');
 const path = require('path');
+const randToken = require('rand-token');
 
 const mail = require('../helper/mail');
 const User = require('../models/user');
@@ -30,10 +31,10 @@ let upload = multer({ storage: storage });
 
 /// Home page
 router.get('/', function (req, res) {
-  res.render('index', { title: 'Express' });
+  res.render('index', { title: 'Hindustaan Jobs' });
 });
 
-// Reset Password
+/// Reset Password
 router.post('/reset-password', (req, res) => {
   const email = req.body.email;
 
@@ -137,23 +138,32 @@ router.post('/login', (req, res, next) => {
         email: user.email
       }, privateKEY, {
         issuer: issuer, audience: audience,
-        algorithm: 'RS256', expiresIn: '7d'
-      });            // CHANGE TIME TO SHORT PERIOD
+        algorithm: 'RS256', expiresIn: '24h'
+      });
 
       // Refresh Token
-      // const refreshToken = jwt.sign({
-      //     email: user.email
-      // }, privateKEY, refreshOptions);
+      const refreshToken = randToken.uid(256);
+      const _user = {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        mobile: user.mobile,
+        referralCode: user.referralCode,
+        approved: user.approved,
+        verified: user.verified,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      }
 
       return res.status(200).json({
-        message: 'Welcome back', user: user,
-        token: JWTToken, refreshToken: "refreshToken"
+        message: 'Welcome back', user: _user,
+        token: JWTToken, refreshToken: refreshToken
       });
     });
   })(req, res, next);
 })
 
-// Google SignIn
+/// Google SignIn
 router.post('/provider/google', (req, res) => {
   const body = req.body;
 
@@ -171,7 +181,7 @@ router.post('/provider/google', (req, res) => {
           password: password,
           referralCode: referralCode,
           provider: 'google',
-          verified: true,
+          verified: { email: true },
           fcmToken: body.fcmToken
         });
 
@@ -184,17 +194,26 @@ router.post('/provider/google', (req, res) => {
         email: user.email
       }, privateKEY, {
         issuer: issuer, audience: audience,
-        algorithm: 'RS256', expiresIn: '7d'
-      });            // CHANGE TIME TO SHORT PERIOD
+        algorithm: 'RS256', expiresIn: 300
+      });
 
       // Refresh Token
-      // const refreshToken = jwt.sign({
-      //     email: user.email
-      // }, privateKEY, refreshOptions);
+      const refreshToken = randToken.uid(256);
+      const _user = {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        mobile: user.mobile,
+        referralCode: user.referralCode,
+        approved: user.approved,
+        verified: user.verified,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      }
 
       return res.status(200).json({
-        message: 'Welcome back', user: user,
-        token: JWTToken, refreshToken: "refreshToken"
+        message: 'Welcome back', user: _user,
+        token: JWTToken, refreshToken: refreshToken
       });
     });
 });
@@ -214,7 +233,7 @@ async function saveData(bc, res) {
   try {
     doc = await bc.save();
     console.log(doc)
-    return res.status(201).json(doc);
+    return res.status(201).json({ message: 'Date successfully saved!' });
   }
   catch (err) {
     console.log(err)

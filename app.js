@@ -57,9 +57,12 @@ app.use(passport.session());
 
 const indexRouter = require('./routes/index');
 const authRouter = require('./routes/auth');
+const paymentRouter = require('./routes/payment');
 
 app.use('/', indexRouter);
 app.use('/auth', authRouter);
+app.use('/payment', passport.authenticate(
+  'user', { session: false }), paymentRouter);
 
 mongoose.set('useCreateIndex', true);
 mongoose.set('useFindAndModify', false);

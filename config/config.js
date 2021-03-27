@@ -1,16 +1,15 @@
 const config = {}
 
-// config.webUri = 'http://www.hindustaanjobs.com';
-// config.serverUri = 'http://api.hindustaanjobs.com';
+/// Razorpay
+const razorpayKey_test = 'rzp_test_ypd8s7ioHEotp8';
+const razorpaySecret_test = 'VuZIBXA93dZ19ROFOFYqUEpF';
+const razorpayKey_live = 'rzp_live_Lj4OZvZ1I5nP8J';
+const razorpaySecret_live = '9oTeQvCZgZiYwZxwKH3TAEsz';
 
-config.webUri = 'http://192.168.1.11:4200';
-config.serverUri = 'http://192.168.1.11:3000';
+config.razorpayKey = razorpayKey_test;
+config.razorpaySecret = razorpaySecret_test;
 
-config.mailchip = '08f19c46a4ac5068b330059771e226de-us2';
-config.razorpayKey_test = 'rzp_test_ypd8s7ioHEotp8';
-config.razorpaySecret_test = 'VuZIBXA93dZ19ROFOFYqUEpF';
-
-config.razorpayKey_live = 'rzp_live_Lj4OZvZ1I5nP8J';
-config.razorpaySecret_live = '9oTeQvCZgZiYwZxwKH3TAEsz';
+// Mailchimp
+config.mailchimp = '08f19c46a4ac5068b330059771e226de-us2';
 
 module.exports = config;

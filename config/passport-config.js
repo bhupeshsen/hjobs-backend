@@ -28,6 +28,9 @@ passport.use('user-local', new LocalStrategy({
       if (user.password == undefined || !user.isValid(password)) {
         return done(null, false, { message: 'Invalid credentials!' });
       }
+      if (user.disabled == true) {
+        return done(null, false, { message: 'Your email is banned from using Our App. Contact support for help.' });
+      }
       return done(null, user);
     });
   }

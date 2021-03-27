@@ -15,18 +15,21 @@ var schema = new Schema({
         trim: true
     },
     mobile: {
-        type: Number
+        type: Number,
+        required: true
     },
     referralCode: { type: String, trim: true },
     fcmToken: { type: String },
     password: { type: String },
     passwordResetToken: String,
     passwordResetExpires: Date,
-    fcmID: String,
     provider: { type: String, default: 'email' },
-    deleted: { type: Boolean, default: false },
+    disabled: { type: Boolean, default: false },
     approved: { type: Boolean, default: false },
-    verified: { type: Boolean, default: false },
+    verified: {
+        email: { type: Boolean, default: false },
+        mobile: { type: Boolean, default: false }
+    },
     createdAt: {
         type: Date,
         default: Date.now(),
