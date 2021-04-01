@@ -229,11 +229,11 @@ function generateReferralCode() {
   return code;
 };
 
-async function saveData(bc, res) {
+async function saveData(data, res) {
   try {
-    doc = await bc.save();
+    doc = await data.save();
     console.log(doc)
-    return res.status(201).json({ message: 'Date successfully saved!' });
+    return res.status(201).json({ message: 'Data successfully saved!' });
   }
   catch (err) {
     console.log(err)

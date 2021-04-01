@@ -58,11 +58,14 @@ app.use(passport.session());
 const indexRouter = require('./routes/index');
 const authRouter = require('./routes/auth');
 const paymentRouter = require('./routes/payment');
+const userRouter = require('./routes/user');
+const recruiterRouter = require('./routes/recruiter');
 
 app.use('/', indexRouter);
 app.use('/auth', authRouter);
-app.use('/payment', passport.authenticate(
-  'user', { session: false }), paymentRouter);
+app.use('/payment', passport.authenticate('user', { session: false }), paymentRouter);
+app.use('/user', passport.authenticate('user'), userRouter);
+app.use('/recruiter', passport.authenticate('user'), recruiterRouter);
 
 mongoose.set('useCreateIndex', true);
 mongoose.set('useFindAndModify', false);
