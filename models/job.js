@@ -14,7 +14,7 @@ const scrQuestSchema = new Schema({
 
 // 0 => Applied; 1 => View; 2 => Shortlist; 3 => Wishlist; 4 => Hired;
 const appliedUserSchema = new Schema({
-  userId: Schema.ObjectId,
+  user: { type: Schema.Types.ObjectId, ref: 'User' },
   status: { type: Number, default: 0 },
   scrQuest: [scrQuestSchema]
 }, { _id: false });
@@ -79,18 +79,16 @@ var schema = new Schema({
     type: Array,
   },
   vacancies: Number,
-  postedById: {
-    type: Schema.ObjectId,
+  postedBy: {
+    type: Schema.Types.ObjectId,
     required: true,
-    ref: 'User'
+    ref: 'Company'
   },
   views: {
     type: Number,
     default: 0
   },
-  appliedById: {
-    type: [appliedUserSchema]
-  },
+  appliedBy: [appliedUserSchema],
   hiredCandidates: {
     type: Array,
     default: []

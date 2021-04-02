@@ -25,6 +25,12 @@ const jobRoleSchema = new Schema({
     experience: { type: String },
 }, { _id: false });
 
+const addOnSchema = new Schema({
+    planId: { type: Schema.Types.ObjectId, default: null },
+    expiryDate: { type: Date, default: new Date('1950-01-01T00:00:00.000Z') },
+    planType: { type: String, trim: true }
+}, { _id: false });
+
 var schema = new Schema({
     addedByCode: { type: String, uppercase: true },
     referredBy: { type: String, trim: true },
@@ -51,7 +57,7 @@ var schema = new Schema({
     gender: { type: String },
     address: {
         state: String,
-        district: String,
+        city: String,
         locality: { type: String, trim: true },
         pinCode: Number
     },
@@ -75,10 +81,21 @@ var schema = new Schema({
         },
         jobRoles: [jobRoleSchema],
     },
+    recruiter: {
+        company: [{ type: Schema.Types.ObjectId, ref: 'Company' }],
+        designation: { type: String, trim: true },
+        plan: {
+            currentPlan: { type: Schema.Types.ObjectId, default: null, ref: 'Plan' },
+            payment: { type: Schema.Types.ObjectId, default: null, ref: 'Payment' },
+            expiryDate: { type: Date, default: new Date('1950-01-01T00:00:00.000Z') },
+        },
+        addOnPlans: [addOnSchema],
+    },
     documents: [docSchema],
     educations: [eduSchema],
     plan: {
-        currentPlan: { type: Schema.ObjectId, default: null, ref: 'Plan' },
+        currentPlan: { type: Schema.Types.ObjectId, default: null, ref: 'Plan' },
+        payment: { type: Schema.Types.ObjectId, default: null, ref: 'Payment' },
         expiryDate: { type: Date, default: new Date('1950-01-01T00:00:00.000Z') },
     },
     referralCode: { type: String, trim: true },

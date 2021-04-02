@@ -71,7 +71,7 @@ mongoose.set('useCreateIndex', true);
 mongoose.set('useFindAndModify', false);
 mongoose.set('useNewUrlParser', true);
 //mongoose.connect('mongodb://AdminJoogle:Gateway500#@127.0.0.1:27017/hindustaanJobs?authSource=admin');
-mongoose.connect('mongodb+srv://hJobs:hJobs%4096@cluster0.nnb1s.mongodb.net/hindustaanjobs?retryWrites=true&w=majority');
+mongoose.connect('mongodb+srv://hJobs:hJobs%4096@cluster0.nnb1s.mongodb.net/hjobs?retryWrites=true&w=majority');
 const connection = mongoose.connection;
 connection.once('open', () => {
   console.log('MongoDB database connection established successfully!');

@@ -15,18 +15,27 @@ const docStorage = multer.diskStorage({
 
 let docUpload = multer({ storage: docStorage });
 
-router.put('/profile/:id', isValidUser, (req, res) => {
-  const id = req.params.id;
-  const body = req.body;
+router.route('/profile')
+  .get(isValidUser, (req, res) => {
+    const id = req.user._id;
+    user.findById({ _id: id }).populate('recruiter.company').exec((err, doc) => {
+      if (err) return res.status(400).json(err);
+      if (!doc) return res.status(404).json({ message: 'Profile not found!' });
+      res.status(200).json(doc);
+    });
+  })
+  .put(isValidUser, (req, res) => {
+    const id = req.user._id;
+    const body = req.body;
 
-  user.findByIdAndUpdate({ _id: id }, body, { new: true }, (err, doc) => {
-    if (err) return res.status(400).json({ message: 'Bad Request', error: err });
-    res.status(200).json({ message: 'Profile successfully updated!', user: doc });
+    user.findByIdAndUpdate({ _id: id }, body, { new: true }, (err, doc) => {
+      if (err) return res.status(400).json({ message: 'Bad Request', error: err });
+      res.status(200).json({ message: 'Profile successfully updated!', user: doc });
+    });
   });
-});
 
-router.put('/add-document/:id', docUpload.array('docs', 2), isValidUser, (req, res) => {
-  const id = req.params.id;
+router.put('/add-document', docUpload.array('docs', 2), isValidUser, (req, res) => {
+  const id = req.user._id;
   const body = req.body;
   const docs = req.files;
   var files = [];
