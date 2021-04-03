@@ -31,6 +31,14 @@ const addOnSchema = new Schema({
     planType: { type: String, trim: true }
 }, { _id: false });
 
+const videoSchema = new Schema({
+    url: { type: String, trim: true },
+    description: { type: String, trim: true },
+    thumbnail: { type: String, trim: true },
+    status: { type: Number, default: 0 }, // 0 => Pending; 1 => Approved; 2 => DisApproved;
+    uploadedAt: { type: Date, default: Date.now() }
+});
+
 var schema = new Schema({
     addedByCode: { type: String, uppercase: true },
     referredBy: { type: String, trim: true },
@@ -90,6 +98,9 @@ var schema = new Schema({
             expiryDate: { type: Date, default: new Date('1950-01-01T00:00:00.000Z') },
         },
         addOnPlans: [addOnSchema],
+    },
+    hunar: {
+        videos: [videoSchema]
     },
     documents: [docSchema],
     educations: [eduSchema],

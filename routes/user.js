@@ -13,7 +13,17 @@ const docStorage = multer.diskStorage({
   }
 })
 
+const picStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'public/images/')
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname))
+  }
+})
+
 let docUpload = multer({ storage: docStorage });
+let picUpload = multer({ storage: picStorage });
 
 router.route('/profile')
   .get(isValidUser, (req, res) => {

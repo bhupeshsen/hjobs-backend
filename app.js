@@ -16,8 +16,8 @@ const admin = require('firebase-admin');
 
 const app = express();
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
 app.use(_cors({
   origin: ['http://localhost:4200', 'http://192.168.1.11:4200'],
@@ -60,9 +60,11 @@ const authRouter = require('./routes/auth');
 const paymentRouter = require('./routes/payment');
 const userRouter = require('./routes/user');
 const recruiterRouter = require('./routes/recruiter');
+const dataRouter = require('./routes/data');
 
 app.use('/', indexRouter);
 app.use('/auth', authRouter);
+app.use('/data', dataRouter);
 app.use('/payment', passport.authenticate('user', { session: false }), paymentRouter);
 app.use('/user', passport.authenticate('user'), userRouter);
 app.use('/recruiter', passport.authenticate('user'), recruiterRouter);
