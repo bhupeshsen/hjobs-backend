@@ -4,3 +4,4 @@ node_modules
 public/documents/*
 public/images/*
 models/.DS_Store
+package-lock.json
