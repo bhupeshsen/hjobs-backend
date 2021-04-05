@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const config = require('../config/config');
 const user = require('../models/user');
 const router = express.Router();
 
@@ -52,7 +53,7 @@ router.put('/add-document', docUpload.array('docs', 2), isValidUser, (req, res) 
 
   if (docs != undefined) {
     docs.map(file => {
-      files.push(file.filename);
+      files.push(config.pathDocuments + file.filename);
     });
   }
 

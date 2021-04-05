@@ -68,6 +68,7 @@ app.use('/data', dataRouter);
 app.use('/payment', passport.authenticate('user', { session: false }), paymentRouter);
 app.use('/user', passport.authenticate('user'), userRouter);
 app.use('/recruiter', passport.authenticate('user'), recruiterRouter);
+app.use('/seeker', passport.authenticate('user'), recruiterRouter);
 
 mongoose.set('useCreateIndex', true);
 mongoose.set('useFindAndModify', false);
