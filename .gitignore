@@ -3,5 +3,7 @@ node_modules
 .DS_Store
 public/documents/*
 public/images/*
+public/images/company/*
+public/videos/local-hunar/*
 models/.DS_Store
 package-lock.json

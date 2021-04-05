@@ -16,7 +16,7 @@ const storageV = multer.diskStorage({
 
 let vidUpload = multer({ storage: storageV });
 
-router.post('/add-video', vidUpload.single('video'), isValidUser, (req, res) => {
+router.post('/video', vidUpload.single('video'), isValidUser, (req, res) => {
   const localHunarId = req.user._id;
 
   var video = {};
