@@ -1,5 +1,7 @@
 const express = require('express');
 const multer = require('multer');
+const mongoose = require('mongoose');
+const ObjectId = mongoose.mongo.ObjectID;
 const path = require('path');
 const config = require('../config/config');
 const user = require('../models/user');
@@ -31,11 +33,45 @@ router.post('/video', vidUpload.single('video'), isValidUser, (req, res) => {
   var update = { $push: { 'hunar.videos': video } }
 
   user.findByIdAndUpdate({ _id: localHunarId },
-    update, { upsert: true, new: true }, (err, result) => {
+    update, { upsert: true, new: true }, (err, doc) => {
       if (err) return res.status(400).json(err);
-      res.status(200).json(result);
+      res.status(200).json({ message: 'Video successfully uploaded!' });
     });
 });
+
+router.route('/video')
+  .get(isValidUser, (req, res) => {
+    const localHunarId = req.user._id;
+    user.findById({ _id: localHunarId }, { hunar: 1 }).exec((err, results) => {
+      if (err) return res.status(400).json(err);
+      res.status(200).json(results.hunar.videos);
+    })
+  })
+  .put(isValidUser, (req, res) => {
+    const localHunarId = req.user._id;
+    const videoId = req.query.videoId;
+    const description = req.body.description;
+
+    user.findOneAndUpdate({
+      _id: ObjectId(localHunarId),
+      'hunar.videos': { $elemMatch: { _id: ObjectId(videoId) } }
+    },
+      { $set: { "hunar.videos.$.description": description } },
+      { upsert: true, new: true }, (err, _) => {
+        if (err) return res.status(400).json(err);
+        res.status(200).json({ message: 'Video successfully updated!' });
+      });
+  })
+  .delete(isValidUser, (req, res) => {
+    const localHunarId = req.user._id;
+    const videoId = req.query.videoId;
+
+    user.findByIdAndUpdate({ _id: ObjectId(localHunarId) },
+      { $pull: { 'hunar.videos': { _id: ObjectId(videoId) } } }, (err, _) => {
+        if (err) return res.status(400).json(err);
+        res.status(200).json({ message: 'Video successfully removed!' });
+      });
+  });
 
 function isValidUser(req, res, next) {
   if (req.isAuthenticated()) next();

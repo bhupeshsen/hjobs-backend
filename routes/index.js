@@ -159,7 +159,7 @@ router.get('/home', (req, res) => {
     // [5] Gallery
     fs.readdirSync(_path).map(m => images.push(`gallery/${m}`)),
     // Count
-    
+
   ]).then(data => {
     res.status(200).json({
       plans: data[0], blogs: data[1],

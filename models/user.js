@@ -72,8 +72,8 @@ var schema = new Schema({
     knownLanguages: Array,
     seeker: {
         iAm: String,
-        savedCompany: { type: Array, default: [] },
-        savedJobs: { type: Array, default: [] },
+        savedCompany: { type: Array },
+        savedJobs: { type: Array },
         englishSkills: { type: String },
         desiredSalary: String,
         prefWorkLocation: String,
