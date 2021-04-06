@@ -54,13 +54,31 @@ router.post('/verify-payment', isValidUser, (req, res) => {
   let isSignatureValid = generatedSignature == razorpaySignature;
 
   if (isSignatureValid) {
-    subscribe(body, res);
+    subscribe(body, req.user, res);
   } else {
     res.status(400).json({ message: 'Payment not verified' });
   }
 });
 
-async function subscribe(body, res) {
+async function subscribe(body, user, res) {
+  const userId = user._id;
+  const bcCode = user.addedByCode;
+  const planId = body.planId;
+  const amount = body.amount;
+  const orderId = body.orderId;
+  const razorpayPaymentId = body.razorpayPaymentId;
+
+  const payment = new Payment({
+    user: userId,
+    plan: planId,
+    bcCode: bcCode,
+    amount: amount,
+    paymentId: razorpayPaymentId,
+    orderId: orderId
+  });
+
+  User
+
   // await 
   res.status(200).json({ message: 'Payment is successful' });
 }

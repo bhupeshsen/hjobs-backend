@@ -10,6 +10,7 @@ const randToken = require('rand-token');
 
 const mail = require('../helper/mail');
 const User = require('../models/user');
+const { BCBM } = require('ifsc/src/node/bank');
 
 // PRIVATE and PUBLIC key
 var privateKEY = fs.readFileSync(__dirname + '/../config/jwt.key', 'utf8');
@@ -88,7 +89,8 @@ router.post('/register', (req, res) => {
 
   const JWTToken = jwt.sign({
     name: body.name,
-    email: body.email
+    email: body.email,
+    addedByCode: body.addedByCode
   }, privateKEY, {
     issuer: issuer, audience: audience,
     algorithm: 'RS256', expiresIn: '24h'
@@ -135,7 +137,8 @@ router.post('/login', (req, res, next) => {
       // JWT Token
       const JWTToken = jwt.sign({
         _id: user._id,
-        email: user.email
+        email: user.email,
+        addedByCode: user.addedByCode
       }, privateKEY, {
         issuer: issuer, audience: audience,
         algorithm: 'RS256', expiresIn: '24h'

@@ -45,6 +45,21 @@ router.route('/profile')
     });
   });
 
+router.put('/photo', picUpload.single('photo'), isValidUser, (req, res) => {
+  const id = req.user._id;
+
+  if (req.file == undefined) {
+    return res.status(400).json({ message: 'Image not received!' });
+  }
+
+  user.findByIdAndUpdate({ _id: id },
+    { photo: '/images/' + req.file.filename }
+  ).exec((err, doc) => {
+    if (err) return res.status(400).json({ message: 'Bad Request', error: err });
+    res.status(200).json({ message: 'Photo successfully updated!', user: doc });
+  })
+})
+
 router.put('/add-document', docUpload.array('docs', 2), isValidUser, (req, res) => {
   const id = req.user._id;
   const body = req.body;
