@@ -47,6 +47,9 @@ router.post('/verify-payment', isValidUser, (req, res) => {
   const razorpayPaymentId = body.razorpayPaymentId;
   const razorpaySignature = body.razorpaySignature;
 
+  console.log(req.body)
+  console.log(req.user)
+
   const hmac = crypto.createHmac('sha256', config.razorpaySecret);
   hmac.update(orderId + "|" + razorpayPaymentId);
   let generatedSignature = hmac.digest('hex');
@@ -86,9 +89,9 @@ async function subscribe(body, user, res) {
     await payment.save((err) => {
       if (err) return res.status(400).json(err);
       payment.populate('plan', 'duration durationType', (_, doc) => {
-        const update = {}
-        const duration = doc.duration;
-        const durationType = doc.durationType;
+        var update = {}
+        const duration = doc.plan.duration;
+        const durationType = doc.plan.durationType;
 
         const nextDate = (durationType === 'Month')
           ? new Date(year, month + duration, day)
@@ -120,6 +123,8 @@ async function subscribe(body, user, res) {
             }
           }
         }
+
+        console.log(update);
 
         User.findByIdAndUpdate({ _id: userId }, update,
           { new: true }).exec((err, user) => {
