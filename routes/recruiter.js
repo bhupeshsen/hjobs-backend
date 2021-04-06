@@ -84,6 +84,15 @@ router.route('/job')
     });
   });
 
+// GET /recruiter/dashboard
+router.get('/dashboard', isValidUser, (req, res) => {
+  const companyId = req.query.companyId;
+  Job.find({ postedBy: ObjectId(companyId) })
+    .sort({ createdAt: -1 }).exec((err, doc) => {
+      if (err) return res.status(400).json(err);
+    });
+})
+
 function isValidUser(req, res, next) {
   if (req.isAuthenticated()) next();
   else return res.status(401).json({ message: 'Unauthorized' });

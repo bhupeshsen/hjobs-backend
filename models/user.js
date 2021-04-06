@@ -26,9 +26,10 @@ const jobRoleSchema = new Schema({
 }, { _id: false });
 
 const addOnSchema = new Schema({
-  planId: { type: Schema.Types.ObjectId, default: null },
+  plan: { type: Schema.Types.ObjectId, default: null, ref: 'Plan' },
   expiryDate: { type: Date, default: new Date('1950-01-01T00:00:00.000Z') },
-  planType: { type: String, trim: true }
+  planType: { type: String, trim: true },
+  payment: { type: Schema.Types.ObjectId, default: null, ref: 'Payment' },
 }, { _id: false });
 
 const videoSchema = new Schema({
