@@ -5,6 +5,7 @@ const Company = require('../models/company');
 const User = require('../models/user');
 const Job = require('../models/job');
 const Plan = require('../models/plan');
+const Notification = require('../models/notification');
 const router = express.Router();
 
 const storage = multer.diskStorage({
@@ -18,19 +19,42 @@ const storage = multer.diskStorage({
 
 let upload = multer({ storage: storage });
 
-router.post('/company', upload.single('logo'), isValidUser, (req, res) => {
-  const body = req.body;
-  body.user = ObjectId(req.user._id);
+router.route('/company')
+  .post(upload.single('logo'), isValidUser, (req, res) => {
+    const body = req.body;
+    body.user = ObjectId(req.user._id);
 
-  if (req.file != undefined) {
-    body.logo = req.file.filename;
-  }
+    if (req.file != undefined) {
+      body.logo = '/images/company/' + req.file.filename;
+    }
 
-  const data = new Company(body);
-  saveCompany(data, res);
-});
+    const data = new Company(body);
+    saveCompany(data, res);
+  })
+  .put(upload.single('logo'), isValidUser, (req, res) => {
+    const companyId = req.query.companyId;
 
-// POST /recruiter/job
+    if (req.file != undefined) {
+      body.logo = '/images/company/' + req.file.filename;
+    }
+
+    var notification = {
+      title: 'Alert',
+      body: 'Your profile has been updated.'
+    }
+
+    Company.findByIdAndUpdate({ _id: companyId }, body).exec((err, doc) => {
+      if (err) return res.status(400).json(err);
+      if (!doc) return res.status(400).json({ message: 'Company not found!' });
+      res.status(200).json(doc);
+    })
+  });
+
+// POST   /recruiter/job
+// GET    /recruiter/job?companyId=<Company Id>
+// GET    /recruiter/job?companyId=<Company Id>&jobId=<Job Id>
+// PUT    /recruiter/job?jobId=<Job Id>
+// DELETE /recruiter/job?jobId=<Job Id>
 router.route('/job')
   .post(isValidUser, (req, res) => {
     const body = req.body;
@@ -57,8 +81,12 @@ router.route('/job')
   })
   .get(isValidUser, (req, res) => {
     const jobId = req.query.jobId;
-    Job.findById({ _id: jobId })
-      .populate('appliedBy.user', 'name email photo')
+    const companyId = req.query.companyId;
+    const query = jobId != null
+      ? Job.findById({ _id: jobId, postedBy: companyId })
+      : Job.find({ postedBy: companyId });
+
+    query.populate('appliedBy.user', 'name email photo')
       .exec((err, doc) => {
         if (err) return res.status(400).json(err);
         if (!doc) return res.status(404).json({ message: 'Job not found!' });
@@ -87,11 +115,49 @@ router.route('/job')
 // GET /recruiter/dashboard
 router.get('/dashboard', isValidUser, (req, res) => {
   const companyId = req.query.companyId;
-  Job.find({ postedBy: ObjectId(companyId) })
-    .sort({ createdAt: -1 }).exec((err, doc) => {
-      if (err) return res.status(400).json(err);
-    });
-})
+
+  const aggregate = Job.aggregate([
+    { $match: { postedBy: ObjectId(companyId) } },
+    { $sort: { createdAt: -1 } },
+    { $unwind: { path: '$appliedBy', preserveNullAndEmptyArrays: true } },
+    { $unwind: { path: '$hiredCandidates', preserveNullAndEmptyArrays: true } },
+    { $unwind: { path: '$shortLists', preserveNullAndEmptyArrays: true } },
+    {
+      $group: {
+        _id: null,
+        totalJobs: { $addToSet: '$_id' },
+        hiredCandidates: { $addToSet: '$hiredCandidates' },
+        appliedBy: { $addToSet: '$appliedBy.user' },
+        shortLists: { $addToSet: '$shortLists' },
+        latestJob: { $first: '$$ROOT' }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        latestJob: 1,
+        totalJobs: { $cond: { if: { $isArray: "$totalJobs" }, then: { $size: "$totalJobs" }, else: 0 } },
+        totalHired: { $cond: { if: { $isArray: "$hiredCandidates" }, then: { $size: "$hiredCandidates" }, else: 0 } },
+        totalApplied: { $cond: { if: { $isArray: "$appliedBy" }, then: { $size: "$appliedBy" }, else: 0 } },
+        totalShortList: { $cond: { if: { $isArray: "$shortLists" }, then: { $size: "$shortLists" }, else: 0 } }
+      }
+    }
+  ]);
+
+  aggregate.exec((err, results) => {
+    if (err) return res.status(400).json(err);
+    res.status(200).json(results);
+  });
+});
+
+// Hired Candidates
+router.route('/hire')
+  .get(isValidUser, (req, res) => {
+    const companyId = req.query.companyId;
+  })
+  .put(isValidUser, (req, res) => {
+
+  });
 
 function isValidUser(req, res, next) {
   if (req.isAuthenticated()) next();
@@ -102,9 +168,14 @@ async function saveCompany(data, res) {
   try {
     doc = await data.save();
 
-    const update = { $push: { 'recruiter.company': ObjectId(doc._id) } }
-    User.findByIdAndUpdate({ _id: doc.user }, update).exec();
-    return res.status(201).json({ message: 'Data successfully saved!' });
+    const update = { $push: { 'recruiter.company': ObjectId(doc._id) } };
+    User.findByIdAndUpdate({ _id: doc.user }, update)
+      .populate('recruiter.company').exec((err, user) => {
+        if (err) return res.status(400).json(err);
+        if (!user) return res.status(404).json({ message: 'Profile not found!' });
+        return res.status(201).json({ message: 'Data successfully saved!', user: user });
+      });
+    return res.status(501).json({ message: 'Data not saved!' });
   }
   catch (err) {
     console.log(err);
@@ -129,7 +200,7 @@ async function saveJobPost(body, res) {
   }
 };
 
-async function sendNotification(body) {
+async function sendNotification1(body) {
   var notification0 = {
     title: 'Alert',
     body: 'New jobs found according your job alert.'
@@ -281,6 +352,19 @@ async function sendNotification(body) {
   }).catch(error => {
     console.error(error);
   });
+}
+
+async function sendNotification(isMultiply, user, type, message) {
+  try {
+    if (isMultiply) {
+      await Notification.insertMany(notification).exec((err) => {
+        if (err) return console.log(err);
+      });
+    } else {
+      const data = new Notification(notification);
+    }
+  }
+  catch (err) { return console.log(err); }
 }
 
 module.exports = router;
