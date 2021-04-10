@@ -93,9 +93,10 @@ var schema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'User'
   }],
-  shortLists: {
-    type: Array
-  },
+  shortLists: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  }],
   boost: {
     multiState: { type: Boolean },
     expiryDate: { type: Date, default: new Date('1950-01-01T00:00:00.000Z') },

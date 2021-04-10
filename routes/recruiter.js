@@ -229,7 +229,7 @@ router.route('/hire')
     const userId = req.body.userId;
 
     const query = { _id: ObjectId(jobId), 'appliedBy.user': userId };
-    const update = { $addToSet: { hiredCandidates: ObjectId(userId) }, 'appliedById.$.status': 5 };
+    const update = { $addToSet: { hiredCandidates: ObjectId(userId) }, 'appliedBy.$.status': 5 };
     const response = { message: 'Successfully hired.', user: userId };
 
     Job.findByIdAndUpdate(query, update, { new: true }).exec((err, job) => {
@@ -243,11 +243,42 @@ router.route('/hire')
 router.route('/wishlist')
   .get(isValidUser, (req, res) => {
     const companyId = req.query.companyId;
-    
+
   })
   .put(isValidUser, (req, res) => {
     const companyId = req.query.companyId;
+  })
 
+// Shortlist
+router.route('/shortlist')
+  .get(isValidUser, (req, res) => {
+    const companyId = req.query.companyId;
+    const query = {
+      postedBy: ObjectId(companyId),
+      shortLists: { $exists: true, $ne: [], $not: { $size: 0 } }
+    };
+    const filter = { shortLists: 1, title: 1, designation: 1, location: 1 };
+
+    Job.find(query, filter)
+      .populate('shortLists', 'name email photo')
+      .exec((err, jobs) => {
+        if (err) return res.status(400).json(err);
+        res.status(200).json(jobs);
+      });
+  })
+  .put(isValidUser, (req, res) => {
+    const jobId = req.query.jobId;
+    const userId = req.body.userId;
+
+    const query = { _id: ObjectId(jobId), 'appliedBy.user': userId };
+    const update = { $addToSet: { shortLists: ObjectId(userId) }, 'appliedBy.$.status': 2 };
+    const response = { message: 'Successfully shortlisted.', user: userId };
+
+    Job.findOneAndUpdate(query, update, { new: true }).exec((err, job) => {
+      if (err) return res.status(400).json(err);
+      if (!job) return res.status(404).json({ message: 'Job not found!' });
+      res.status(200).json(response);
+    })
   })
 
 function isValidUser(req, res, next) {
