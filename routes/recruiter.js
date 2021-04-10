@@ -8,6 +8,7 @@ const User = require('../models/user');
 const Job = require('../models/job');
 const Plan = require('../models/plan');
 const Notification = require('../models/notification');
+const Conversation = require('../models/conversation');
 const router = express.Router();
 
 const storage = multer.diskStorage({
@@ -328,6 +329,23 @@ router.route('/gallery')
         res.status(200).json({ message: 'Image successfully removed.' });
       });
   });
+
+// Conversations
+router.get('/conversations/:from/:to', isValidUser, (req, res) => {
+  const fromId = req.params.from;
+  const toId = req.params.to;
+
+  Conversation.find({
+    $or: [
+      { 'to.userId': ObjectId(fromId) }, { 'from.userId': ObjectId(fromId) },
+      { 'to.userId': ObjectId(toId) }, { 'from.userId': ObjectId(toId) }
+    ]
+  }, (err, results) => {
+    if (err) return res.status(400).json(err);
+    res.status(200).json(results);
+  });
+});
+
 
 function isValidUser(req, res, next) {
   if (req.isAuthenticated()) next();
