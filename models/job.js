@@ -89,13 +89,12 @@ var schema = new Schema({
     default: 0
   },
   appliedBy: [appliedUserSchema],
-  hiredCandidates: {
-    type: Array,
-    default: []
-  },
+  hiredCandidates: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  }],
   shortLists: {
-    type: Array,
-    default: []
+    type: Array
   },
   boost: {
     multiState: { type: Boolean },

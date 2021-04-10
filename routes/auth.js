@@ -10,7 +10,6 @@ const randToken = require('rand-token');
 
 const mail = require('../helper/mail');
 const User = require('../models/user');
-const { BCBM } = require('ifsc/src/node/bank');
 
 // PRIVATE and PUBLIC key
 var privateKEY = fs.readFileSync(__dirname + '/../config/jwt.key', 'utf8');
@@ -107,6 +106,8 @@ router.post('/register', (req, res) => {
     name: body.name,
     email: body.email,
     mobile: body.mobile,
+    addedByCode: body.addedByCode,
+    referredBy: body.referredBy,
     password: password,
     referralCode: referralCode,
     passwordResetToken: passwordResetToken,

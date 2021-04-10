@@ -33,6 +33,7 @@ router.route('/company')
   })
   .put(upload.single('logo'), isValidUser, (req, res) => {
     const companyId = req.query.companyId;
+    const body = req.body;
 
     if (req.file != undefined) {
       body.logo = '/images/company/' + req.file.filename;
@@ -45,7 +46,7 @@ router.route('/company')
 
     Company.findByIdAndUpdate({ _id: companyId }, body).exec((err, doc) => {
       if (err) return res.status(400).json(err);
-      if (!doc) return res.status(400).json({ message: 'Company not found!' });
+      if (!doc) return res.status(404).json({ message: 'Company not found!' });
       res.status(200).json(doc);
     })
   });
@@ -150,14 +151,64 @@ router.get('/dashboard', isValidUser, (req, res) => {
   });
 });
 
+// Applied Candidates
+router.get('/applied', isValidUser, (req, res) => {
+  const companyId = req.query.companyId;
+  const query = { postedBy: ObjectId(companyId) };
+  const filter = { appliedBy: 1, title: 1, designation: 1, location: 1 };
+
+  Job.find(query, filter)
+    .populate('appliedBy')
+    .populate('appliedBy.user', 'name email photo')
+    .exec((err, jobs) => {
+      if (err) return res.status(400).json(err);
+      res.status(200).json(jobs);
+    });
+});
+
 // Hired Candidates
 router.route('/hire')
   .get(isValidUser, (req, res) => {
     const companyId = req.query.companyId;
+    const query = {
+      postedBy: ObjectId(companyId),
+      hiredCandidates: { $exists: true, $ne: [], $not: { $size: 0 } }
+    };
+    const filter = { hiredCandidates: 1, title: 1, designation: 1, location: 1 };
+
+    Job.find(query, filter)
+      .populate('hiredCandidates', 'name email photo')
+      .exec((err, jobs) => {
+        if (err) return res.status(400).json(err);
+        res.status(200).json(jobs);
+      });
   })
   .put(isValidUser, (req, res) => {
+    const jobId = req.query.jobId;
+    const userId = req.body.userId;
 
+    const query = { _id: ObjectId(jobId), 'appliedBy.user': userId };
+    const update = { $addToSet: { hiredCandidates: ObjectId(userId) }, 'appliedById.$.status': 5 };
+    const response = { message: 'Successfully hired.', user: userId };
+
+    Job.findByIdAndUpdate(query, update, { new: true }).exec((err, job) => {
+      if (err) return res.status(400).json(err);
+      if (!job) return res.status(404).json({ message: 'Job not found!' });
+      res.status(200).json(job);
+    })
   });
+
+router.get('/view-profile/:userId', isValidUser, (req, res) => {
+  const userId = req.params.userId;
+  const status = req.query.status;
+  const filter = {};
+
+  User.findById({ _id: userId }, filter).exec((err, user) => {
+    if (err) return res.status(400).json(err);
+    if (!user) return res.status(404).json({ message: 'User not Found!' });
+    res.status(200).json(user);
+  });
+});
 
 function isValidUser(req, res, next) {
   if (req.isAuthenticated()) next();
@@ -169,13 +220,13 @@ async function saveCompany(data, res) {
     doc = await data.save();
 
     const update = { $push: { 'recruiter.company': ObjectId(doc._id) } };
-    User.findByIdAndUpdate({ _id: doc.user }, update)
+    await User.findByIdAndUpdate({ _id: doc.user }, update)
       .populate('recruiter.company').exec((err, user) => {
         if (err) return res.status(400).json(err);
         if (!user) return res.status(404).json({ message: 'Profile not found!' });
         return res.status(201).json({ message: 'Data successfully saved!', user: user });
       });
-    return res.status(501).json({ message: 'Data not saved!' });
+    res.status(501).json({ message: 'Data not saved!' });
   }
   catch (err) {
     console.log(err);

@@ -103,6 +103,8 @@ var schema = new Schema({
   hunar: {
     videos: [videoSchema]
   },
+  customer: {},
+  provider: {},
   documents: [docSchema],
   educations: [eduSchema],
   plan: {
