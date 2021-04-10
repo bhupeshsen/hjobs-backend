@@ -166,6 +166,47 @@ router.get('/applied', isValidUser, (req, res) => {
     });
 });
 
+// View Profile
+router.get('/view-profile/:userId', isValidUser, (req, res) => {
+  const userId = req.params.userId;
+  const jobId = req.query.jobId;
+  const status = req.query.status;
+
+  if (jobId != null && status == 0) {
+    const query = {
+      _id: ObjectId(jobId),
+      'appliedBy.user': userId
+    };
+    const update = { 'appliedBy.$.status': 1 };
+
+    Job.findOneAndUpdate(query, update, { new: true })
+      .populate({
+        path: 'appliedBy.user',
+        match: { _id: ObjectId(userId) },
+        select: 'name email mobile photo documents educations seeker'
+      })
+      .exec((err, job) => {
+        if (err) return res.status(400).json(err);
+        if (!job) return res.status(404).json({ message: 'User not Found!' });
+        job.appliedBy = job.appliedBy.filter(m => m.user != null);
+
+        const user = job.appliedBy[0].user;
+        res.status(200).json(user);
+      })
+  } else {
+    const filter = {
+      name: 1, email: 1, mobile: 1, photo: 1,
+      documents: 1, educations: 1, seeker: 1
+    };
+
+    User.findById({ _id: userId }, filter).exec((err, user) => {
+      if (err) return res.status(400).json(err);
+      if (!user) return res.status(404).json({ message: 'User not Found!' });
+      res.status(200).json(user);
+    });
+  }
+});
+
 // Hired Candidates
 router.route('/hire')
   .get(isValidUser, (req, res) => {
@@ -198,17 +239,16 @@ router.route('/hire')
     })
   });
 
-router.get('/view-profile/:userId', isValidUser, (req, res) => {
-  const userId = req.params.userId;
-  const status = req.query.status;
-  const filter = {};
+// Wishlist
+router.route('/wishlist')
+  .get(isValidUser, (req, res) => {
+    const companyId = req.query.companyId;
+    
+  })
+  .put(isValidUser, (req, res) => {
+    const companyId = req.query.companyId;
 
-  User.findById({ _id: userId }, filter).exec((err, user) => {
-    if (err) return res.status(400).json(err);
-    if (!user) return res.status(404).json({ message: 'User not Found!' });
-    res.status(200).json(user);
-  });
-});
+  })
 
 function isValidUser(req, res, next) {
   if (req.isAuthenticated()) next();
@@ -226,7 +266,6 @@ async function saveCompany(data, res) {
         if (!user) return res.status(404).json({ message: 'Profile not found!' });
         return res.status(201).json({ message: 'Data successfully saved!', user: user });
       });
-    res.status(501).json({ message: 'Data not saved!' });
   }
   catch (err) {
     console.log(err);

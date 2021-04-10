@@ -29,11 +29,19 @@ let picUpload = multer({ storage: picStorage });
 router.route('/profile')
   .get(isValidUser, (req, res) => {
     const id = req.user._id;
-    user.findById({ _id: id }).populate('recruiter.company').exec((err, doc) => {
-      if (err) return res.status(400).json(err);
-      if (!doc) return res.status(404).json({ message: 'Profile not found!' });
-      res.status(200).json(doc);
-    });
+    const filter = {
+      password: 0,
+      passwordResetToken: 0,
+      passwordResetExpires: 0
+    };
+
+    user.findById({ _id: id }, filter)
+      .populate('recruiter.company')
+      .exec((err, doc) => {
+        if (err) return res.status(400).json(err);
+        if (!doc) return res.status(404).json({ message: 'Profile not found!' });
+        res.status(200).json(doc);
+      });
   })
   .put(isValidUser, (req, res) => {
     const id = req.user._id;
