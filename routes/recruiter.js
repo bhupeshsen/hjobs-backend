@@ -1,6 +1,8 @@
 const express = require('express');
 const multer = require('multer');
 const ObjectId = require('mongodb').ObjectID;
+const path = require('path');
+const config = require('../config/config');
 const Company = require('../models/company');
 const User = require('../models/user');
 const Job = require('../models/job');
@@ -25,7 +27,7 @@ router.route('/company')
     body.user = ObjectId(req.user._id);
 
     if (req.file != undefined) {
-      body.logo = '/images/company/' + req.file.filename;
+      body.logo = config.pathCompany + req.file.filename;
     }
 
     const data = new Company(body);
@@ -36,7 +38,7 @@ router.route('/company')
     const body = req.body;
 
     if (req.file != undefined) {
-      body.logo = '/images/company/' + req.file.filename;
+      body.logo = config.pathCompany + req.file.filename;
     }
 
     var notification = {
@@ -247,6 +249,9 @@ router.route('/wishlist')
   })
   .put(isValidUser, (req, res) => {
     const companyId = req.query.companyId;
+    const action = req.query.action;
+
+
   })
 
 // Shortlist
@@ -280,6 +285,49 @@ router.route('/shortlist')
       res.status(200).json(response);
     })
   })
+
+// Gallery
+router.route('/gallery')
+  .get(isValidUser, (req, res) => {
+    const companyId = req.query.companyId;
+
+    Company.findById({ _id: companyId }, { gallery: 1 })
+      .exec((err, company) => {
+        if (err) return res.status(400).json(err);
+        if (!company) return res.status(404).json({ message: 'Company not found!' });
+        res.status(200).json(company.gallery);
+      })
+  })
+  .post(isValidUser, upload.single('image'), (req, res) => {
+    const companyId = req.query.companyId;
+    var update = {};
+
+    if (req.file != undefined) {
+      const image = config.pathCompany + req.file.filename;
+      update = { $push: { "gallery": image } };
+
+      Company.findByIdAndUpdate({ _id: companyId }, update,
+        { safe: true, upsert: true, new: true }, (err, _) => {
+          if (err) return res.status(400).json(err);
+          res.status(200).json({ message: 'Image successfully added.', image: image });
+        });
+
+    } else {
+      return res.status(400).json({ message: 'File not received!' });
+    }
+  })
+  .delete(isValidUser, (req, res) => {
+    const companyId = req.query.companyId;
+    const image = req.query.image;
+
+    var update = { $pull: { "gallery": image } }
+
+    Company.findByIdAndUpdate({ _id: companyId }, update,
+      { safe: true, upsert: true, new: true }, (err, _) => {
+        if (err) return res.status(400).json(err);
+        res.status(200).json({ message: 'Image successfully removed.' });
+      });
+  });
 
 function isValidUser(req, res, next) {
   if (req.isAuthenticated()) next();

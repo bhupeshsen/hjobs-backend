@@ -99,6 +99,10 @@ var schema = new Schema({
       expiryDate: { type: Date, default: new Date('1950-01-01T00:00:00.000Z') },
     },
     addOnPlans: [addOnSchema],
+    wishlist: [{
+      type: Schema.Types.ObjectId,
+      ref: 'User'
+    }]
   },
   hunar: {
     videos: [videoSchema]
