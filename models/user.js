@@ -73,8 +73,8 @@ var schema = new Schema({
   knownLanguages: Array,
   seeker: {
     iAm: String,
-    savedCompany: { type: Array },
-    savedJobs: { type: Array },
+    savedCompany: [{ type: Schema.Types.ObjectId, ref: 'Company' }],
+    savedJobs: [{ type: Schema.Types.ObjectId, ref: 'Job' }],
     englishSkills: { type: String },
     desiredSalary: String,
     prefWorkLocation: String,
