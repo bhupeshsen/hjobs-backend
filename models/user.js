@@ -40,6 +40,27 @@ const videoSchema = new Schema({
   uploadedAt: { type: Date, default: Date.now() }
 });
 
+const serviceSchema = new Schema({
+  categoryName: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  serviceName: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  price: {
+    type: Number,
+    required: true,
+  },
+  isEnabled: {
+    type: Boolean,
+    default: true
+  },
+});
+
 var schema = new Schema({
   addedByCode: { type: String, uppercase: true },
   referredBy: { type: String, trim: true },
@@ -108,8 +129,30 @@ var schema = new Schema({
   hunar: {
     videos: [videoSchema]
   },
-  customer: {},
-  provider: {},
+  customer: {
+    related: {
+      name: { type: String },
+      type: { type: String }
+    },
+    telephone: {
+      alternate: Number,
+      residence: Number,
+      office: Number
+    }
+  },
+  provider: {
+    disability: {
+      type: { type: String },
+      disabilityType: { type: String }
+    },
+    experience: String,
+    about: String,
+    availability: String,
+    preferredWorkArea: String,
+    views: { type: Number, default: 0 },
+    gallery: [String],
+    services: [serviceSchema]
+  },
   documents: [docSchema],
   educations: [eduSchema],
   plan: {

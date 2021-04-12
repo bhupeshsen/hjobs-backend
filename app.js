@@ -61,6 +61,8 @@ const paymentRouter = require('./routes/payment');
 const userRouter = require('./routes/user');
 const recruiterRouter = require('./routes/recruiter');
 const seekerRouter = require('./routes/seeker');
+const customerRouter = require('./routes/customer');
+const providerRouter = require('./routes/provider');
 const dataRouter = require('./routes/data');
 const hunarRouter = require('./routes/hunar');
 
@@ -71,6 +73,8 @@ app.use('/payment', passport.authenticate('user', { session: false }), paymentRo
 app.use('/user', passport.authenticate('user'), userRouter);
 app.use('/recruiter', passport.authenticate('user'), recruiterRouter);
 app.use('/seeker', passport.authenticate('user'), seekerRouter);
+app.use('/customer', passport.authenticate('user'), customerRouter);
+app.use('/provider', passport.authenticate('user'), providerRouter);
 app.use('/hunar', passport.authenticate('user'), hunarRouter);
 
 mongoose.set('useCreateIndex', true);
