@@ -231,11 +231,11 @@ router.route('/hire')
     const jobId = req.query.jobId;
     const userId = req.body.userId;
 
-    const query = { _id: ObjectId(jobId), 'appliedBy.user': userId };
+    const query = { _id: ObjectId(jobId), 'appliedBy.user': ObjectId(userId) };
     const update = { $addToSet: { hiredCandidates: ObjectId(userId) }, 'appliedBy.$.status': 5 };
     const response = { message: 'Successfully hired.', user: userId };
 
-    Job.findByIdAndUpdate(query, update, { new: true }).exec((err, job) => {
+    Job.findOneAndUpdate(query, update, { new: true }).exec((err, job) => {
       if (err) return res.status(400).json(err);
       if (!job) return res.status(404).json({ message: 'Job not found!' });
       res.status(200).json(job);
