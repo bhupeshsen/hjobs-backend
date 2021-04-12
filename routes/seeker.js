@@ -11,30 +11,35 @@ const router = express.Router();
 const compiledFunction = pug.compileFile(__dirname + '/../views/resume.pug');
 
 router.get('/dashboard', isValidUser, (req, res) => {
-  const id = req.user._id;
+  const userId = req.user._id;
   const today = new Date();
   const newDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
 
+  Job.find({ appliedBy: ObjectId(userId) })
+    .exec((err, jobs) => {
+      if (err) return res.status(400).json(err);
 
+    })
 })
 
 // Apply Job
 router.put('/apply-job/:jobId', isValidUser, (req, res) => {
   const jobId = req.params.jobId;
   const userId = req.user._id;
+  const scrQuest = req.body.scrQuest;
 
   const today = new Date();
   const newDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
 
   const query = { _id: jobId, 'appliedBy.user': { $ne: ObjectId(userId) }, deadline: { $gte: newDate } };
-  const update = { _id: jobId, 'appliedBy.user': { $ne: ObjectId(userId) } };
+  const update = { $addToSet: { appliedBy: { user: ObjectId(userId), scrQuest: scrQuest } } };
 
-  Job.findOneAndUpdate(query)
+  Job.findOneAndUpdate(query, update)
     .populate('postedBy', 'name')
-    .exec((err, jobs) => {
+    .exec((err, job) => {
       if (err) return res.status(400).json(err);
-      if (!hob) return res.status(404).json({ message: 'Job is expired!' })
-      res.status(200).json(jobs);
+      if (!job) return res.status(404).json({ message: 'Job is expired or already applied!' })
+      res.status(200).json({ message: 'Job is successfully applied!' });
     });
 });
 
