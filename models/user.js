@@ -75,6 +75,7 @@ var schema = new Schema({
     iAm: String,
     savedCompany: [{ type: Schema.Types.ObjectId, ref: 'Company' }],
     savedJobs: [{ type: Schema.Types.ObjectId, ref: 'Job' }],
+    skills: { type: Array },
     englishSkills: { type: String },
     desiredSalary: String,
     prefWorkLocation: String,

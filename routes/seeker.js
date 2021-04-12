@@ -6,6 +6,7 @@ const ObjectId = require('mongodb').ObjectID;
 const User = require('../models/user');
 const Job = require('../models/job');
 const CustomAlert = require('../models/custom-alert');
+const Company = require('../models/company');
 const router = express.Router();
 
 const compiledFunction = pug.compileFile(__dirname + '/../views/resume.pug');
@@ -15,12 +16,30 @@ router.get('/dashboard', isValidUser, (req, res) => {
   const today = new Date();
   const newDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
 
-  Job.find({ appliedBy: ObjectId(userId) })
+  Job.find({ 'appliedBy.user': ObjectId(userId) })
+    .populate({
+      path: 'appliedBy.user',
+      match: { _id: ObjectId(userId) },
+      select: 'seeker'
+    })
     .exec((err, jobs) => {
       if (err) return res.status(400).json(err);
 
+      const firstJob = jobs[0].appliedBy.filter(m => m.user != null);
+      const user = firstJob[0].user;
+      const savedCompany = user.seeker.savedCompany;
+
+      Job.find({ skills: { $in: user.seeker.skills } }, { _id: 1 }).exec((err, rJobs) => {
+        if (err) return res.status(400).json(err);
+        const response = {
+          applied: jobs != null ? jobs.length : 0,
+          savedCompany: savedCompany != null ? savedCompany.length : 0,
+          recommendedJobs: rJobs != null ? rJobs.length : 0
+        }
+        res.status(200).json(response);
+      })
     })
-})
+});
 
 // Apply Job
 router.put('/apply-job/:jobId', isValidUser, (req, res) => {
@@ -127,7 +146,7 @@ router.route('/saved-company')
 
   });
 
-// Company's jobs
+// Company's Jobs
 router.get('/jobs', isValidUser, (req, res) => {
   const companyId = req.query.companyId;
   const skills = req.query.skills;
@@ -139,6 +158,62 @@ router.get('/jobs', isValidUser, (req, res) => {
     res.status(200).json(jobs);
   });
 });
+
+// Recommended Jobs
+router.get('/recommended-jobs', (req, res) => {
+  const userId = req.user._id;
+
+  const today = new Date();
+  const newDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
+
+  const filter = { hiredCandidates: 0, appliedBy: 0, shortLists: 0 };
+
+  User.findById({ _id: userId }, { 'seeker.skills': 1 }).exec((err, user) => {
+    if (err) return res.status(400).json(err);
+    if (!user) return res.status(200).json({ message: 'User not found!' });
+
+    Job.find({
+      skills: { $in: user.seeker.skills },
+      deadline: { $gte: newDate }
+    }, filter)
+      .populate('postedBy', 'name logo')
+      .exec((err, jobs) => {
+        if (err) return res.status(400).json(err);
+        res.status(200).json(jobs);
+      });
+  });
+});
+
+// Companies
+router.get('/companies', isValidUser, (req, res) => {
+  const query = req.query.q;
+  const filter = { name: 1, officialEmail: 1, logo: 1 };
+
+  if (query == null) {
+    return res.status(400).json({ message: 'Company or Sector name missing!' });
+  }
+
+  Company.find({
+    $or: [
+      { name: { $regex: query, $options: 'i' } },
+      { sector: { $regex: query, $options: 'i' } }
+    ]
+  }, filter, (err, companies) => {
+    if (err) return res.status(400).json(err);
+    res.status(200).json(companies);
+  });
+});
+
+// Company Details
+router.get('/company', isValidUser, (req, res) => {
+  const companyId = req.query.companyId;
+
+  Company.findById({ _id: companyId }, { user: 0 }).exec((err, company) => {
+    if (err) return res.status(400).json(err);
+    if (!company) return res.status(404).json({ message: 'Company not found!' });
+    res.status(200).json(company);
+  });
+})
 
 // Custom Alert
 router.route('/custom-alert')

@@ -1,8 +1,10 @@
 const express = require('express');
 const multer = require('multer');
+const ObjectId = require('mongodb').ObjectID;
 const path = require('path');
 const config = require('../config/config');
 const user = require('../models/user');
+const Notification = require('../models/notification');
 const router = express.Router();
 
 const docStorage = multer.diskStorage({
@@ -97,6 +99,25 @@ router.put('/add-document', docUpload.array('docs', 2), isValidUser, (req, res) 
     })
 
 });
+
+router.route('/notifications')
+  .get(isValidUser, (req, res) => {
+    const id = req.user._id;
+
+    Notification.find({ userId: ObjectId(id) }, (err, notifications) => {
+      if (err) return res.status(400).json(err);
+      res.status(200).json(notifications);
+    });
+  })
+  .delete(isValidUser, (req, res) => {
+    const id = req.user._id;
+
+    Notification.deleteMany({ userId: ObjectId(id) })
+      .exec((err, _) => {
+        if (err) return res.status(400).json(err);
+        res.status(200).json({ message: 'Notifications successfully deleted!' });
+      })
+  });
 
 function isValidUser(req, res, next) {
   if (req.isAuthenticated()) next();
