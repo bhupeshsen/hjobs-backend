@@ -241,6 +241,13 @@ router.route('/custom-alert')
     });
   })
 
+// Resume
+router.route('/custom-resume')
+  .get(isValidUser, (req, res) => {
+    const userId = req.user._id;
+  })
+  .put(isValidUser, (req, res) => { });
+
 async function saveData(data, res) {
   try {
     doc = await data.save();

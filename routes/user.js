@@ -100,6 +100,7 @@ router.put('/add-document', docUpload.array('docs', 2), isValidUser, (req, res) 
 
 });
 
+// Notifications
 router.route('/notifications')
   .get(isValidUser, (req, res) => {
     const id = req.user._id;
@@ -118,6 +119,16 @@ router.route('/notifications')
         res.status(200).json({ message: 'Notifications successfully deleted!' });
       })
   });
+
+// Wallet
+router.get('/wallet', isValidUser, (req, res) => {
+  const userId = req.user._id;
+
+  user.findById({ _id: userId }, { wallet: 1 }, (err, user) => {
+    if (err) return res.status(400).json(err);
+    res.status(200).json(user);
+  });
+});
 
 function isValidUser(req, res, next) {
   if (req.isAuthenticated()) next();
