@@ -30,6 +30,7 @@ router.route('/service')
     const userId = req.user._id;
 
     Service.find({ user: userId })
+      .sort({ createdAt: -1 })
       .exec((err, services) => {
         if (err) return res.status(400).json(err);
         res.status(200).json(services);
@@ -140,6 +141,7 @@ router.route('/order')
     const model = orderId != undefined ? Order.findOne(query) : Order.find(query);
 
     model.populate('customer', filter)
+      .sort({ createdAt: -1 })
       .exec((err, order) => {
         if (err) return res.status(400).json(err);
         res.status(200).json(order);
