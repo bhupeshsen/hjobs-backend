@@ -10,12 +10,20 @@ const router = express.Router();
 router.route('/service')
   .get(isValidUser, (req, res) => {
     const userId = req.user._id;
+
+    User.findById({ _id: userId }, { provider: 1 })
+      .exec((err, user) => {
+        if (err) return res.status(400).json(err);
+
+        const services = user.provider != null ? user.provider.services : [];
+        res.status(200).json(services);
+      });
   })
   .post(isValidUser, (req, res) => {
     const userId = req.user._id;
     const service = req.body;
 
-    const update = { $push: { 'provider.services': service } };
+    const update = { $addToSet: { 'provider.services': service } };
     const options = { upsert: true, new: true };
 
     User.findByIdAndUpdate({ _id: userId }, update)
@@ -34,7 +42,7 @@ router.route('/service')
     User.findByIdAndUpdate({ _id: userId }, update)
       .exec((err, _) => {
         if (err) return res.status(400).json(err);
-        res.status(200).json({ message: 'Service successfully added!' });
+        res.status(200).json({ message: 'Service successfully deleted!' });
       });
   });
 

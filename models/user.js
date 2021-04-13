@@ -166,7 +166,7 @@ var schema = new Schema({
   password: { type: String },
   passwordResetToken: String,
   passwordResetExpires: Date,
-  provider: { type: String, default: 'email' },
+  auth: { type: String, default: 'email' },
   disabled: { type: Boolean, default: false },
   approved: { type: Boolean, default: false },
   verified: {
