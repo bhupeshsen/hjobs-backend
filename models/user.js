@@ -61,7 +61,7 @@ const serviceSchema = new Schema({
   },
 });
 
-var schema = new Schema({
+const schema = new Schema({
   addedByCode: { type: String, uppercase: true },
   referredBy: { type: String, trim: true },
   name: {
@@ -193,4 +193,8 @@ schema.methods.isValid = function (hashedPassword) {
   return bcrypt.compareSync(hashedPassword, this.password);
 }
 
-module.exports = mongoose.model('User', schema);
+const Service = mongoose.model('Service', serviceSchema);
+const User = mongoose.model('User', schema);
+module.exports = {
+  Service, User
+}

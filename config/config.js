@@ -16,5 +16,6 @@ config.mailchimp = '08f19c46a4ac5068b330059771e226de-us2';
 config.pathDocuments = '/documents/'
 config.pathVideosLH = '/videos/local-hunar/'
 config.pathCompany = '/images/company/'
+config.pathProvider = '/images/provider/'
 
 module.exports = config;

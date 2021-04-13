@@ -6,7 +6,7 @@ const job = require('../models/job');
 const Blog = require('../models/blog');
 const Feedback = require('../models/feedback');
 const FAQ = require('../models/feedback');
-const user = require('../models/user');
+const user = require('../models/user').User;
 const router = express.Router();
 
 router.get('/home', (req, res) => {

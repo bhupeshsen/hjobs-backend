@@ -9,7 +9,7 @@ const path = require('path');
 const randToken = require('rand-token');
 
 const mail = require('../helper/mail');
-const User = require('../models/user');
+const User = require('../models/user').User;
 
 // PRIVATE and PUBLIC key
 var privateKEY = fs.readFileSync(__dirname + '/../config/jwt.key', 'utf8');

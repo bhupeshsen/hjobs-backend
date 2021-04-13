@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const ObjectId = mongoose.mongo.ObjectID;
 const path = require('path');
 const config = require('../config/config');
-const user = require('../models/user');
+const user = require('../models/user').User;
 const router = express.Router();
 
 const storageV = multer.diskStorage({

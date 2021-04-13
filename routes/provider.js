@@ -1,8 +1,25 @@
 const express = require('express');
 const multer = require('multer');
+const fs = require('fs');
+const path = require('path');
 const ObjectId = require('mongodb').ObjectID;
-const User = require('../models/user');
+const config = require('../config/config');
+const { User } = require('../models/user');
+const { Order } = require('../models/provider/order');
 const router = express.Router();
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const path = 'public/images/provider';
+    fs.mkdirSync(path, { recursive: true });
+    cb(null, path);
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
+
+let upload = multer({ storage: storage });
 
 // GET /provider/service
 // POST /provider/service {categoryName:'A', serviceName: 'B', price: 0}
@@ -43,6 +60,90 @@ router.route('/service')
       .exec((err, _) => {
         if (err) return res.status(400).json(err);
         res.status(200).json({ message: 'Service successfully deleted!' });
+      });
+  });
+
+// Gallery
+router.route('/gallery')
+  .get(isValidUser, (req, res) => {
+    const userId = req.user._id;
+
+    User.findById({ _id: userId }, { 'provider.gallery': 1 })
+      .exec((err, user) => {
+        if (err) return res.status(400).json(err);
+        if (!user) return res.status(404).json({ message: 'User not found!' });
+
+        const gallery = user.provider != null ? user.provider.gallery : [];
+
+        res.status(200).json(gallery);
+      })
+  })
+  .post(isValidUser, upload.single('image'), (req, res) => {
+    const userId = req.user._id;
+
+    const options = { safe: true, upsert: true, new: true };
+    var update = {};
+
+    if (req.file != undefined) {
+      const image = config.pathProvider + req.file.filename;
+      update = { $push: { "provider.gallery": image } };
+
+      User.findByIdAndUpdate({ _id: userId }, update,
+        options, (err, _) => {
+          if (err) return res.status(400).json(err);
+          res.status(200).json({ message: 'Image successfully added.', image: image });
+        });
+
+    } else {
+      return res.status(400).json({ message: 'File not received!' });
+    }
+  })
+  .delete(isValidUser, (req, res) => {
+    const userId = req.user._id;
+    const image = req.query.image;
+
+    var update = { $pull: { "gallery": image } }
+
+    User.findByIdAndUpdate({ _id: userId }, update,
+      { safe: true, upsert: true, new: true }, (err, _) => {
+        if (err) return res.status(400).json(err);
+        res.status(200).json({ message: 'Image successfully removed.' });
+      });
+  });
+
+// Orders
+router.route('/order')
+  .get(isValidUser, (req, res) => {
+    const userId = req.user._id;
+    const orderId = req.query.orderId;
+
+    const query = orderId != undefined
+      ? { _id: ObjectId(orderId), provider: ObjectId(userId) }
+      : { provider: ObjectId() };
+    const filter = 'name mobile address customer.telephone';
+    const model = orderId != undefined ? Order.findOne(query) : Order.find(query);
+
+    model.populate('customer', filter)
+      .exec((err, order) => {
+        if (err) return res.status(400).json(err);
+        res.status(200).json(order);
+      });
+  })
+  .put(isValidUser, (req, res) => {
+    const userId = req.user._id;
+    const orderId = req.query.orderId;
+
+    const status = req.body.status;
+    const customerId = req.body.customer;
+
+    // [Status] 0 => Created; 1 => Accepted; 2 => Rejected;
+    const update = status == 'accept' ? { status: 1 } : status == 'reject' ? { status: 2 } : {}
+
+    Order.findByIdAndUpdate({ _id: orderId },
+      update, { new: true })
+      .exec((err, doc) => {
+        if (err) return res.status(400).json(err);
+        res.status(200).json(doc);
       });
   });
 

@@ -1,7 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const ObjectId = require('mongodb').ObjectID;
-const User = require('../models/user');
+const User = require('../models/user').User;
 const router = express.Router();
 
 router.route('/search', isValidUser, (req, res) => {

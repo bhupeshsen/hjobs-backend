@@ -3,7 +3,7 @@ const router = express.Router();
 const Razorpay = require('razorpay');
 const crypto = require("crypto");
 const config = require('../config/config');
-const User = require('../models/user');
+const User = require('../models/user').User;
 const Payment = require('../models/payment');
 
 var instance = new Razorpay({
