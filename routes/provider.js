@@ -6,6 +6,7 @@ const ObjectId = require('mongodb').ObjectID;
 const config = require('../config/config');
 const { User } = require('../models/user');
 const { Order } = require('../models/provider/order');
+const { Service } = require('../models/provider/service');
 const router = express.Router();
 
 const storage = multer.diskStorage({
@@ -28,39 +29,54 @@ router.route('/service')
   .get(isValidUser, (req, res) => {
     const userId = req.user._id;
 
-    User.findById({ _id: userId }, { provider: 1 })
-      .exec((err, user) => {
+    Service.find({ user: userId })
+      .exec((err, services) => {
         if (err) return res.status(400).json(err);
-
-        const services = user.provider != null ? user.provider.services : [];
         res.status(200).json(services);
       });
   })
-  .post(isValidUser, (req, res) => {
+  .post(isValidUser, async (req, res) => {
     const userId = req.user._id;
-    const service = req.body;
+    const body = req.body;
 
-    const update = { $addToSet: { 'provider.services': service } };
+    const service = new Service({
+      user: userId,
+      categoryName: body.categoryName,
+      serviceName: body.serviceName,
+      price: body.price
+    });
+
     const options = { upsert: true, new: true };
 
-    User.findByIdAndUpdate({ _id: userId }, update)
-      .exec((err, _) => {
-        if (err) return res.status(400).json(err);
-        res.status(200).json({ message: 'Service successfully added!' });
-      });
+    service.save(function (err) {
+      if (err) return res.status(400).json(err);
+
+      const update = { $addToSet: { 'provider.services': service._id } };
+
+      User.findByIdAndUpdate({ _id: userId }, update, options)
+        .exec((err, _) => {
+          if (err) return res.status(400).json(err);
+          res.status(200).json({ message: 'Service successfully added!' });
+        });
+    });
   })
   .delete(isValidUser, (req, res) => {
     const userId = req.user._id;
     const serviceId = req.query.serviceId;
 
-    const update = { $pull: { 'provider.services': { _id: ObjectId(serviceId) } } };
+    const update = { $pull: { 'provider.services': ObjectId(serviceId) } };
     const options = { upsert: true, new: true };
 
-    User.findByIdAndUpdate({ _id: userId }, update)
+    Service.findByIdAndDelete({ _id: ObjectId(serviceId) })
       .exec((err, _) => {
         if (err) return res.status(400).json(err);
-        res.status(200).json({ message: 'Service successfully deleted!' });
-      });
+
+        User.findByIdAndUpdate({ _id: userId }, update, options)
+          .exec((err, _) => {
+            if (err) return res.status(400).json(err);
+            res.status(200).json({ message: 'Service successfully deleted!' });
+          });
+      })
   });
 
 // Gallery

@@ -4,7 +4,7 @@ const ObjectId = require('mongodb').ObjectID;
 const User = require('../models/user').User;
 const router = express.Router();
 
-router.route('/search', isValidUser, (req, res) => {
+router.get('/search', isValidUser, (req, res) => {
   const userId = req.user._id;
   const search = req.query.q;
 
@@ -21,6 +21,10 @@ router.route('/search', isValidUser, (req, res) => {
     if (err) return res.status(400).json(err);
     res.status(200).json(providers);
   });
+});
+
+router.get('/providers', isValidUser, (req, res) => {
+
 });
 
 function isValidUser(req, res, next) {

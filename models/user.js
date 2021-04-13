@@ -40,27 +40,6 @@ const videoSchema = new Schema({
   uploadedAt: { type: Date, default: Date.now() }
 });
 
-const serviceSchema = new Schema({
-  categoryName: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  serviceName: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  price: {
-    type: Number,
-    required: true,
-  },
-  isEnabled: {
-    type: Boolean,
-    default: true
-  },
-});
-
 const schema = new Schema({
   addedByCode: { type: String, uppercase: true },
   referredBy: { type: String, trim: true },
@@ -151,7 +130,7 @@ const schema = new Schema({
     preferredWorkArea: String,
     views: { type: Number, default: 0 },
     gallery: [String],
-    services: [serviceSchema]
+    services: [{ type: Schema.Types.ObjectId, ref: 'Service' }]
   },
   documents: [docSchema],
   educations: [eduSchema],
@@ -193,8 +172,7 @@ schema.methods.isValid = function (hashedPassword) {
   return bcrypt.compareSync(hashedPassword, this.password);
 }
 
-const Service = mongoose.model('Service', serviceSchema);
 const User = mongoose.model('User', schema);
 module.exports = {
-  Service, User
+  User
 }
