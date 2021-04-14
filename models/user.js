@@ -6,7 +6,7 @@ const docSchema = new Schema({
   type: { type: String, trim: true },
   files: { type: Array, default: [] },
   number: { type: String, trim: true }
-}, { _id: false });
+});
 
 const eduSchema = new Schema({
   type: { type: String, trim: true },
@@ -18,7 +18,7 @@ const eduSchema = new Schema({
   universityName: { type: String, trim: true },
   degree: { type: String, trim: true },
   courseType: { type: String, trim: true }
-}, { _id: false });
+});
 
 const jobRoleSchema = new Schema({
   name: { type: String },

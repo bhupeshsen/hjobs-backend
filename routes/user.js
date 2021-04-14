@@ -3,7 +3,7 @@ const multer = require('multer');
 const ObjectId = require('mongodb').ObjectID;
 const path = require('path');
 const config = require('../config/config');
-const user = require('../models/user').User;
+const { User } = require('../models/user');
 const Notification = require('../models/notification');
 const router = express.Router();
 
@@ -37,7 +37,7 @@ router.route('/profile')
       passwordResetExpires: 0
     };
 
-    user.findById({ _id: id }, filter)
+    User.findById({ _id: id }, filter)
       .populate('recruiter.company')
       .exec((err, doc) => {
         if (err) return res.status(400).json(err);
@@ -49,7 +49,7 @@ router.route('/profile')
     const id = req.user._id;
     const body = req.body;
 
-    user.findByIdAndUpdate({ _id: id }, body, { new: true }, (err, doc) => {
+    User.findByIdAndUpdate({ _id: id }, body, { new: true }, (err, doc) => {
       if (err) return res.status(400).json({ message: 'Bad Request', error: err });
       res.status(200).json({ message: 'Profile successfully updated!', user: doc });
     });
@@ -62,7 +62,7 @@ router.put('/photo', picUpload.single('photo'), isValidUser, (req, res) => {
     return res.status(400).json({ message: 'Image not received!' });
   }
 
-  user.findByIdAndUpdate({ _id: id },
+  User.findByIdAndUpdate({ _id: id },
     { photo: '/images/' + req.file.filename }
   ).exec((err, doc) => {
     if (err) return res.status(400).json({ message: 'Bad Request', error: err });
@@ -92,13 +92,43 @@ router.put('/add-document', docUpload.array('docs', 2), isValidUser, (req, res) 
     }
   }
 
-  user.findByIdAndUpdate({ _id: id }, update,
+  User.findByIdAndUpdate({ _id: id }, update,
     { new: true, upsert: true }, (err, doc) => {
       if (err) return res.status(400).json({ message: 'Bad Request', error: err });
       res.status(200).json({ message: 'Documents successfully updated!', user: doc });
     })
 
 });
+
+router.route('/education')
+  .post(isValidUser, (req, res) => {
+    const userId = req.user._id;
+    const body = req.body;
+
+    const update = { $push: { educations: body } };
+    const options = { safe: true, upsert: true, new: true };
+
+    User.findByIdAndUpdate({ _id: userId }, update, options)
+      .exec((err, doc) => {
+        if (err) return res.status(400).json(err);
+        if (!doc) return res.status(404).json({ message: 'User not found!' });
+        res.status(200).json(doc);
+      })
+  })
+  .delete(isValidUser, (req, res) => {
+    const userId = req.user._id;
+    const eduId = req.query.eduId;
+
+    const update = { $pull: { _id: eduId } };
+    const options = { safe: true, upsert: true, new: true };
+
+    User.findByIdAndUpdate({ _id: userId }, update, options)
+      .exec((err, doc) => {
+        if (err) return res.status(400).json(err);
+        if (!doc) return res.status(404).json({ message: 'User not found!' });
+        res.status(200).json(doc);
+      })
+  })
 
 // Notifications
 router.route('/notifications')
@@ -124,7 +154,7 @@ router.route('/notifications')
 router.get('/wallet', isValidUser, (req, res) => {
   const userId = req.user._id;
 
-  user.findById({ _id: userId }, { wallet: 1 }, (err, user) => {
+  User.findById({ _id: userId }, { wallet: 1 }, (err, user) => {
     if (err) return res.status(400).json(err);
     res.status(200).json(user);
   });
