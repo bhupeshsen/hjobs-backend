@@ -9,7 +9,9 @@ const router = express.Router();
 
 const docStorage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'public/documents/')
+    const path = 'public/documents/';
+    fs.mkdirSync(path, { recursive: true });
+    cb(null, path)
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + path.extname(file.originalname))
@@ -18,7 +20,9 @@ const docStorage = multer.diskStorage({
 
 const picStorage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'public/images/')
+    const path = 'public/images/';
+    fs.mkdirSync(path, { recursive: true });
+    cb(null, path)
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + path.extname(file.originalname))
