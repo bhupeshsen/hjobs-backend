@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const ObjectId = require('mongodb').ObjectID;
+const fs = require('fs');
 const path = require('path');
 const config = require('../config/config');
 const { User } = require('../models/user');
