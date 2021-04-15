@@ -72,6 +72,7 @@ const schema = new Schema({
   },
   knownLanguages: Array,
   seeker: {
+    status: { type: Boolean, default: false },
     iAm: String,
     savedCompany: [{ type: Schema.Types.ObjectId, ref: 'Company' }],
     savedJobs: [{ type: Schema.Types.ObjectId, ref: 'Job' }],
@@ -93,6 +94,7 @@ const schema = new Schema({
     jobRoles: [jobRoleSchema],
   },
   recruiter: {
+    status: { type: Boolean, default: false },
     company: [{ type: Schema.Types.ObjectId, ref: 'Company' }],
     designation: { type: String, trim: true },
     plan: {
@@ -107,9 +109,11 @@ const schema = new Schema({
     }]
   },
   hunar: {
+    status: { type: Boolean, default: false },
     videos: [videoSchema]
   },
   customer: {
+    status: { type: Boolean, default: false },
     related: {
       name: { type: String },
       type: { type: String }
@@ -121,6 +125,7 @@ const schema = new Schema({
     }
   },
   provider: {
+    status: { type: Boolean, default: false },
     disability: {
       type: { type: String },
       disabilityType: { type: String }
