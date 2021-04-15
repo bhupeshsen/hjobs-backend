@@ -30,7 +30,7 @@ router.post('/video', vidUpload.single('video'), isValidUser, (req, res) => {
     return res.status(400).json({ message: 'File not received!' });
   }
 
-  var update = { $push: { 'hunar.videos': video } }
+  var update = { 'hunar.status': true, $push: { 'hunar.videos': video } }
 
   user.findByIdAndUpdate({ _id: localHunarId },
     update, { upsert: true, new: true }, (err, doc) => {

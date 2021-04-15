@@ -37,7 +37,7 @@ router.get('/dashboard', isValidUser, (req, res) => {
       ba: 0,
       fse: 0,
       seeker: {
-        login: seeker.status == true ? users.length : 0,
+        login: seeker?.status == true ? users.length : 0,
         subscribed: 0
       },
       recruiter: {
@@ -55,6 +55,8 @@ router.get('/dashboard', isValidUser, (req, res) => {
         subscribed: 0,
       }
     }
+
+    res.status(200).json(response)
   })
 });
 

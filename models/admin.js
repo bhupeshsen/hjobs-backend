@@ -28,6 +28,7 @@ const schema = new Schema({
     type: String,
     default: null
   },
+  password: { type: String },
   disabled: {
     type: Boolean,
     default: false

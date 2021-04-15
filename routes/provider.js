@@ -25,7 +25,8 @@ let upload = multer({ storage: storage });
 // Update Profile
 router.put('/profile', isValidUser, (req, res) => {
   const userId = req.user._id;
-  const body = req.body;
+  var body = req.body;
+  body.status = true;
 
   User.findByIdAndUpdate({ _id: userId }, { provider: body }, { new: true })
     .exec((err, user) => {
