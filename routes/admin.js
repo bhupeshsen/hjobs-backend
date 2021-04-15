@@ -16,47 +16,69 @@ router.get('/dashboard', isValidUser, (req, res) => {
     'recruiter.addOnPlans': 1, 'recruiter.plan': 1
   };
 
-  User.find({}, filter).exec((err, users) => {
-    if (err) return res.status(400).json(err);
-
-    const seeker = users.seeker;
-    const recruiter = users.recruiter;
-    const customer = users.customer;
-    const provider = users.provider;
-    const hunar = users.hunar;
-
-    const response = {
-      cm: {
-        active: 0,
-        inactive: 0
-      },
-      bc: {
-        active: 0,
-        inactive: 0
-      },
-      ba: 0,
-      fse: 0,
-      seeker: {
-        login: seeker?.status == true ? users.length : 0,
-        subscribed: 0
-      },
-      recruiter: {
-        login: 0,
-        subscribed: 0,
-        resume: 0,
-        jobBranding: {
-          single: 0,
-          multiple: 0
+  User.aggregate([
+    {
+      $facet: {
+        _seeker: [
+          { $match: { 'seeker.status': true } },
+          {
+            $project: {
+              subscribed: { $cond: [{ $gte: ['$plan.expiryDate', new Date()] }, 1, 0] },
+            }
+          }
+        ],
+        _recruiter: [
+          { $match: { 'recruiter.status': true } },
+          {
+            $project: {
+              subscribed: { $cond: [{ $gte: ['$recruiter.plan.expiryDate', new Date()] }, 1, 0] },
+            }
+          }
+        ],
+        _customer: [
+          { $match: { 'customer.status': true } }
+        ],
+        _provider: [
+          { $match: { 'provider.status': true } },
+          {
+            $project: {
+              subscribed: { $cond: [{ $gte: ['$plan.expiryDate', new Date()] }, 1, 0] },
+            }
+          }
+        ],
+        _hunar: [
+          { $match: { 'hunar.status': true } }
+        ],
+      }
+    },
+    {
+      $project: {
+        seeker: {
+          total: { $size: '$_seeker' },
+          unsubscribed: { $subtract: [{ $size: '$_seeker' }, { $sum: '$_seeker.subscribed' }] },
+          subscribed: { $sum: '$_seeker.subscribed' }
+        },
+        recruiter: {
+          total: { $size: '$_recruiter' },
+          unsubscribed: { $subtract: [{ $size: '$_recruiter' }, { $sum: '$_recruiter.subscribed' }] },
+          subscribed: { $sum: '$_recruiter.subscribed' }
+        },
+        provider: {
+          total: { $size: '$_provider' },
+          unsubscribed: { $subtract: [{ $size: '$_provider' }, { $sum: '$_provider.subscribed' }] },
+          subscribed: { $sum: '$_provider.subscribed' }
+        },
+        customer: {
+          total: { $size: '$_customer' },
+        },
+        hunar: {
+          total: { $size: '$_hunar' },
         }
-      },
-      customer: 0,
-      provider: {
-        login: 0,
-        subscribed: 0,
       }
     }
-
-    res.status(200).json(response)
+  ]).exec((err, data) => {
+    if (err) return res.status(400).json(err);
+    res.status(200).json(data[0])
   })
 });
 
