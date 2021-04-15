@@ -57,6 +57,7 @@ app.use(passport.session());
 
 const indexRouter = require('./routes/index');
 const authRouter = require('./routes/auth');
+const adminRouter = require('./routes/admin');
 const paymentRouter = require('./routes/payment');
 const userRouter = require('./routes/user');
 const recruiterRouter = require('./routes/recruiter');
@@ -69,6 +70,7 @@ const hunarRouter = require('./routes/hunar');
 app.use('/', indexRouter);
 app.use('/auth', authRouter);
 app.use('/data', dataRouter);
+app.use('/admin', passport.authenticate('admin', { session: false }), adminRouter)
 app.use('/payment', passport.authenticate('user', { session: false }), paymentRouter);
 app.use('/user', passport.authenticate('user'), userRouter);
 app.use('/recruiter', passport.authenticate('user'), recruiterRouter);

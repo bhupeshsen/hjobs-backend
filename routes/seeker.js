@@ -3,7 +3,7 @@ const multer = require('multer');
 const pug = require('pug');
 const puppeteer = require('puppeteer');
 const ObjectId = require('mongodb').ObjectID;
-const User = require('../models/user').User;
+const { User } = require('../models/user');
 const Job = require('../models/job');
 const CustomAlert = require('../models/custom-alert');
 const Company = require('../models/company');
@@ -16,29 +16,24 @@ router.get('/dashboard', isValidUser, (req, res) => {
   const today = new Date();
   const newDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
 
-  Job.find({ 'appliedBy.user': ObjectId(userId) })
-    .populate({
-      path: 'appliedBy.user',
-      match: { _id: ObjectId(userId) },
-      select: 'seeker'
-    })
-    .exec((err, jobs) => {
-      if (err) return res.status(400).json(err);
+  User.findById({ _id: userId }).exec((err, user) => {
+    if (err) return res.status(400).json(err);
 
-      const firstJob = jobs[0].appliedBy.filter(m => m.user != null);
-      const user = firstJob[0].user;
-      const savedCompany = user.seeker.savedCompany;
+    const appliedJobs = user.seeker.appliedJobs;
+    const savedCompany = user.seeker.savedCompany;
 
-      Job.find({ skills: { $in: user.seeker.skills } }, { _id: 1 }).exec((err, rJobs) => {
+    Job.find({ skills: { $in: user.seeker.skills } }, { _id: 1 })
+      .exec((err, rJobs) => {
         if (err) return res.status(400).json(err);
         const response = {
-          applied: jobs != null ? jobs.length : 0,
+          applied: appliedJobs != null ? appliedJobs.length : 0,
           savedCompany: savedCompany != null ? savedCompany.length : 0,
           recommendedJobs: rJobs != null ? rJobs.length : 0
         }
+
         res.status(200).json(response);
       })
-    })
+  });
 });
 
 // Apply Job
@@ -52,12 +47,15 @@ router.put('/apply-job/:jobId', isValidUser, (req, res) => {
 
   const query = { _id: jobId, 'appliedBy.user': { $ne: ObjectId(userId) }, deadline: { $gte: newDate } };
   const update = { $addToSet: { appliedBy: { user: ObjectId(userId), scrQuest: scrQuest } } };
+  const updateUser = { $addToSet: { 'seeker.appliedJobs': jobId } };
 
   Job.findOneAndUpdate(query, update)
     .populate('postedBy', 'name')
-    .exec((err, job) => {
+    .exec(async (err, job) => {
       if (err) return res.status(400).json(err);
-      if (!job) return res.status(404).json({ message: 'Job is expired or already applied!' })
+      if (!job) return res.status(404).json({ message: 'Job is expired or already applied!' });
+
+      await User.findByIdAndUpdate({ _id: userId }, updateUser).exec();
       res.status(200).json({ message: 'Job is successfully applied!' });
     });
 });
