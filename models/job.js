@@ -1,5 +1,5 @@
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
 const extraFieldSchema = new Schema({
   type: { type: String, trim: true },
@@ -19,7 +19,7 @@ const appliedUserSchema = new Schema({
   scrQuest: [scrQuestSchema]
 }, { _id: false });
 
-var schema = new Schema({
+const schema = new Schema({
   title: {
     type: String,
     required: true,

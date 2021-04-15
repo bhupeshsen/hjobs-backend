@@ -3,6 +3,7 @@ const multer = require('multer');
 const ObjectId = require('mongodb').ObjectID;
 const Company = require('../models/company');
 const { User } = require('../models/user');
+const { GovtJob } = require('../models/govt-job');
 const Job = require('../models/job');
 const Plan = require('../models/plan');
 const router = express.Router();
@@ -52,6 +53,22 @@ router.get('/dashboard', isValidUser, (req, res) => {
       }
     },
     {
+      $lookup: {
+        from: Job.collection.name,
+        let: {},
+        pipeline: [{ $project: { _id: 1 } }],
+        as: 'jobs'
+      }
+    },
+    {
+      $lookup: {
+        from: GovtJob.collection.name,
+        let: {},
+        pipeline: [{ $project: { _id: 1 } }],
+        as: 'govtJobs'
+      }
+    },
+    {
       $project: {
         seeker: {
           total: { $size: '$_seeker' },
@@ -73,7 +90,9 @@ router.get('/dashboard', isValidUser, (req, res) => {
         },
         hunar: {
           total: { $size: '$_hunar' },
-        }
+        },
+        jobs: { $size: '$jobs' },
+        govtJobs: { $size: '$govtJobs' }
       }
     }
   ]).exec((err, data) => {

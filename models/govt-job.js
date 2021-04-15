@@ -1,8 +1,8 @@
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
-var uniqueValidator = require('mongoose-unique-validator');
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+const uniqueValidator = require('mongoose-unique-validator');
 
-var schema = new Schema({
+const schema = new Schema({
   title: {
     type: String,
     required: true,
@@ -37,4 +37,5 @@ var schema = new Schema({
 
 schema.plugin(uniqueValidator);
 
-module.exports = mongoose.model('GovtJob', schema);
+const GovtJob = mongoose.model('GovtJob', schema);
+module.exports = { GovtJob }
