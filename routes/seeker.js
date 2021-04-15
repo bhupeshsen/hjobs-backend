@@ -77,7 +77,7 @@ router.put('/apply-job/:jobId', isValidUser, (req, res) => {
 router.get('/applied-jobs', isValidUser, (req, res) => {
   const userId = req.user._id;
   const query = { 'appliedBy.user': ObjectId(userId) };
-  const filter = { appliedById: 0, hiredCandidates: 0 };
+  const filter = { appliedBy: 0, hiredCandidates: 0, shortLists: 0 };
 
   Job.find(query, filter)
     .populate('postedBy', 'name photo')
@@ -157,17 +157,27 @@ router.route('/saved-company')
 
   });
 
-// Company's Jobs
-router.get('/jobs', isValidUser, (req, res) => {
+// All Jobs       ==>  GET /seeker/job
+// Company's Jobs ==>  GET /seeker/job?companyId=<Company Id>
+// View Job       ==>  GET /seeker/job?jobId=<Job Id>
+router.get('/job', isValidUser, (req, res) => {
   const companyId = req.query.companyId;
+  const jobId = req.query.jobId;
   const skills = req.query.skills;
 
-  const query = { postedBy: companyId, skills: { $regex: '.*' + skills + '.*', $options: 'i' } }
+  const query = jobId == undefined
+    ? companyId != undefined
+      ? { postedBy: companyId, skills: { $regex: '.*' + skills + '.*', $options: 'i' } } : {}
+    : { _id: jobId };
+  const filter = { appliedBy: 0, hiredCandidates: 0, shortLists: 0 };
+  const model = jobId == undefined ? Job.find(query, filter) : Job.findById(query, filter)
 
-  Job.find(query).exec((err, jobs) => {
-    if (err) return res.status(400).json(err);
-    res.status(200).json(jobs);
-  });
+  model.populate('postedBy', 'name photo')
+    .sort({ createdAt: -1 })
+    .exec((err, jobs) => {
+      if (err) return res.status(400).json(err);
+      res.status(200).json(jobs);
+    });
 });
 
 // Recommended Jobs

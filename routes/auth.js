@@ -9,13 +9,14 @@ const path = require('path');
 const randToken = require('rand-token');
 
 const mail = require('../helper/mail');
-const User = require('../models/user').User;
+const { User } = require('../models/user');
+const { Admin } = require('../models/admin');
 
 // PRIVATE and PUBLIC key
 var privateKEY = fs.readFileSync(__dirname + '/../config/jwt.key', 'utf8');
 
-var issuer = 'admin.hindustaanjobs.com';        // Issuer 
-var audience = 'hindustaanjobs.com';            // Audience
+const issuer = 'admin.hindustaanjobs.com';        // Issuer
+const audience = 'hindustaanjobs.com';            // Audience
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -117,10 +118,12 @@ router.post('/register', (req, res) => {
   saveData(user, res)
 });
 
+/// Verify Email
 router.put('/verify/:userId', (req, res) => {
   res.status(200).json({ message: 'Email successfully verified.' })
-})
+});
 
+/// Login
 router.post('/login', (req, res, next) => {
   passport.authenticate('user-local', function (err, user, info) {
     if (err) { return res.status(401).json(err); }
@@ -165,7 +168,54 @@ router.post('/login', (req, res, next) => {
       });
     });
   })(req, res, next);
-})
+});
+
+/// Admin Login
+router.post('/admin', (req, res, next) => {
+  passport.authenticate('admin-local', function (err, user, info) {
+    if (err) { return res.status(401).json(err); }
+    if (!user) { return res.status(401).json(info); }
+
+    req.logIn(user, function (err) {
+      if (err) { return res.status(401).json(err); }
+
+      Admin.findByIdAndUpdate({ _id: user._id },
+        { fcmToken: req.body.fcmToken },
+        { password: 0 }, (err) => {
+          if (err) { return res.status(401).json(err); }
+        });
+
+      // JWT Token
+      const JWTToken = jwt.sign({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }, privateKEY, {
+        issuer: issuer, audience: audience,
+        algorithm: 'RS256', expiresIn: '24h'
+      });
+
+      // Refresh Token
+      const refreshToken = randToken.uid(256);
+
+      // User
+      const _user = {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        photo: user.photo,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      }
+
+      return res.status(200).json({
+        message: 'Welcome back', user: _user,
+        token: JWTToken, refreshToken: refreshToken
+      });
+    });
+  })(req, res, next);
+});
 
 /// Google SignIn
 router.post('/provider/google', (req, res) => {

@@ -3,7 +3,8 @@ const passport = require('passport');
 const passportJWT = require("passport-jwt");
 const LocalStrategy = require('passport-local').Strategy;
 
-const User = require('../models/user').User;
+const { User } = require('../models/user');
+const { Admin } = require('../models/admin');
 
 const JWTStrategy = passportJWT.Strategy;
 const ExtractJWT = passportJWT.ExtractJwt;
@@ -14,6 +15,27 @@ const publicKEY = fs.readFileSync(__dirname + '/jwt.key.pub', 'utf8');
 
 const issuer = 'admin.hindustaanjobs.com';        // Issuer 
 const audience = 'hindustaanjobs.com';            // Audience
+
+passport.use('admin-local', new LocalStrategy({
+  usernameField: 'email',
+  passwordField: 'password'
+},
+  function (username, password, done) {
+    Admin.findOne({ email: username }, function (err, user) {
+      if (err) { return done(err); }
+      if (!user) {
+        return done(null, false, { message: 'Invalid credentials!' });
+      }
+      if (user.password == undefined || !user.isValid(password)) {
+        return done(null, false, { message: 'Invalid credentials!' });
+      }
+      if (user.disabled == true) {
+        return done(null, false, { message: 'Your email is banned from using Admin. Contact support for help.' });
+      }
+      return done(null, user);
+    });
+  }
+));
 
 passport.use('user-local', new LocalStrategy({
   usernameField: 'email',
@@ -44,6 +66,24 @@ passport.deserializeUser(function (user, done) {
   if (user != null)
     done(null, user);
 });
+
+passport.use('admin', new JWTStrategy({
+  jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken(),
+  secretOrKey: publicKEY,
+  issuer: issuer,
+  audience: audience
+},
+  async function (jwtPayload, cb) {
+    try {
+      const user = await Admin.findById(jwtPayload._id);
+      console.log(user);
+      return cb(null, user);
+    }
+    catch (err) {
+      return cb(err);
+    }
+  }
+));
 
 passport.use('user', new JWTStrategy({
   jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken(),

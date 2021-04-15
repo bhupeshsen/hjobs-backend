@@ -9,10 +9,21 @@ const router = express.Router();
 
 router.get('/dashboard', isValidUser, (req, res) => {
   const role = req.user.role;
+  const filter = {
+    plan: 1,
+    'seeker.status': 1, 'recruiter.status': 1,
+    'customer.status': 1, 'provider.status': 1,
+    'recruiter.addOnPlans': 1, 'recruiter.plan': 1
+  };
+
   User.find({}, filter).exec((err, users) => {
     if (err) return res.status(400).json(err);
 
-
+    const seeker = users.seeker;
+    const recruiter = users.recruiter;
+    const customer = users.customer;
+    const provider = users.provider;
+    const hunar = users.hunar;
 
     const response = {
       cm: {
@@ -26,7 +37,7 @@ router.get('/dashboard', isValidUser, (req, res) => {
       ba: 0,
       fse: 0,
       seeker: {
-        login: 0,
+        login: seeker.status == true ? users.length : 0,
         subscribed: 0
       },
       recruiter: {
