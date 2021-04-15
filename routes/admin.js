@@ -9,8 +9,10 @@ const router = express.Router();
 
 router.get('/dashboard', isValidUser, (req, res) => {
   const role = req.user.role;
-  User.find({}, filter).exec((err, user) => {
+  User.find({}, filter).exec((err, users) => {
     if (err) return res.status(400).json(err);
+
+
 
     const response = {
       cm: {

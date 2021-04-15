@@ -36,6 +36,19 @@ router.get('/dashboard', isValidUser, (req, res) => {
   });
 });
 
+// Update Profile
+router.put('/profile', isValidUser, (req, res) => {
+  const userId = req.user._id;
+  const body = req.body;
+
+  User.findByIdAndUpdate({ _id: userId }, { seeker: body }, { new: true })
+    .exec((err, user) => {
+      if (err) return res.status(400).json(err);
+      if (!user) return res.status(404).json({ message: 'User not found!' });
+      res.status(200).json({ message: 'Profile successfully updated!', user: user });
+    });
+});
+
 // Apply Job
 router.put('/apply-job/:jobId', isValidUser, (req, res) => {
   const jobId = req.params.jobId;

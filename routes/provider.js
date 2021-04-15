@@ -22,6 +22,19 @@ const storage = multer.diskStorage({
 
 let upload = multer({ storage: storage });
 
+// Update Profile
+router.put('/profile', isValidUser, (req, res) => {
+  const userId = req.user._id;
+  const body = req.body;
+
+  User.findByIdAndUpdate({ _id: userId }, { provider: body }, { new: true })
+    .exec((err, user) => {
+      if (err) return res.status(400).json(err);
+      if (!user) return res.status(404).json({ message: 'User not found!' });
+      res.status(200).json({ message: 'Profile successfully updated!', user: user });
+    });
+});
+
 // GET /provider/service
 // POST /provider/service {categoryName:'A', serviceName: 'B', price: 0}
 // DELETE /provider/service?serviceId=123

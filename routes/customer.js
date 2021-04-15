@@ -6,6 +6,19 @@ const { Service } = require('../models/provider/service');
 const { Order } = require('../models/provider/order');
 const router = express.Router();
 
+// Update Profile
+router.put('/profile', isValidUser, (req, res) => {
+  const userId = req.user._id;
+  const body = req.body;
+
+  User.findByIdAndUpdate({ _id: userId }, { customer: body }, { new: true })
+    .exec((err, user) => {
+      if (err) return res.status(400).json(err);
+      if (!user) return res.status(404).json({ message: 'User not found!' });
+      res.status(200).json({ message: 'Profile successfully updated!', user: user });
+    });
+});
+
 // Search
 router.get('/search', isValidUser, (req, res) => {
   const userId = req.user._id;
