@@ -159,7 +159,7 @@ router.route('/saved-company')
   });
 
 // All Jobs       ==>  GET /seeker/job
-// Company's Jobs ==>  GET /seeker/job?companyId=<Company Id>
+// Company's Jobs ==>  GET /seeker/job?companyId=<Company Id>&skills=<Skills>
 // View Job       ==>  GET /seeker/job?jobId=<Job Id>
 router.get('/job', isValidUser, (req, res) => {
   const companyId = req.query.companyId;
@@ -173,7 +173,7 @@ router.get('/job', isValidUser, (req, res) => {
   const filter = { appliedBy: 0, hiredCandidates: 0, shortLists: 0 };
   const model = jobId == undefined ? Job.find(query, filter) : Job.findById(query, filter)
 
-  model.populate('postedBy', 'name photo')
+  model.populate('postedBy', 'name logo')
     .sort({ createdAt: -1 })
     .exec((err, jobs) => {
       if (err) return res.status(400).json(err);

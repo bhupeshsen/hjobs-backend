@@ -12,4 +12,5 @@ const schema = new Schema({
   createdAt: { type: Date, required: true, default: Date.now() }
 });
 
-module.exports = mongoose.model('Payment', schema);
+const Payment = mongoose.model('Payment', schema);
+module.exports = { Payment }

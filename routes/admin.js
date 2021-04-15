@@ -4,18 +4,13 @@ const ObjectId = require('mongodb').ObjectID;
 const Company = require('../models/company');
 const { User } = require('../models/user');
 const { GovtJob } = require('../models/govt-job');
+const { Payment } = require('../models/payment');
 const Job = require('../models/job');
 const Plan = require('../models/plan');
 const router = express.Router();
 
 router.get('/dashboard', isValidUser, (req, res) => {
   const role = req.user.role;
-  const filter = {
-    plan: 1,
-    'seeker.status': 1, 'recruiter.status': 1,
-    'customer.status': 1, 'provider.status': 1,
-    'recruiter.addOnPlans': 1, 'recruiter.plan': 1
-  };
 
   User.aggregate([
     {
@@ -56,7 +51,22 @@ router.get('/dashboard', isValidUser, (req, res) => {
       $lookup: {
         from: Job.collection.name,
         let: {},
-        pipeline: [{ $project: { _id: 1 } }],
+        pipeline: [
+          {
+            $project: {
+              _id: 1,
+              boosting: { $cond: [{ $gte: ['$boost.expiryDate', new Date()] }, 1, 0] },
+              multiState: {
+                $cond: [{
+                  $and: [
+                    { $gte: ['$boost.expiryDate', new Date()] },
+                    { $eq: ['$boost.multiState', true] },
+                  ]
+                }, 1, 0]
+              }
+            }
+          }
+        ],
         as: 'jobs'
       }
     },
@@ -66,6 +76,14 @@ router.get('/dashboard', isValidUser, (req, res) => {
         let: {},
         pipeline: [{ $project: { _id: 1 } }],
         as: 'govtJobs'
+      }
+    },
+    {
+      $lookup: {
+        from: Payment.collection.name,
+        let: {},
+        pipeline: [{ $project: { _id: 1, amount: 1 } }],
+        as: 'payments'
       }
     },
     {
@@ -92,7 +110,14 @@ router.get('/dashboard', isValidUser, (req, res) => {
           total: { $size: '$_hunar' },
         },
         jobs: { $size: '$jobs' },
-        govtJobs: { $size: '$govtJobs' }
+        govtJobs: { $size: '$govtJobs' },
+        jobBoosting: {
+          total: { $sum: '$jobs.boosting' },
+          single: { $subtract: [{ $sum: '$jobs.boosting' }, { $sum: '$jobs.multiState' }] },
+          multi: { $sum: '$jobs.multiState' }
+        },
+        jobBranding: '0',
+        earning: { $sum: '$payments.amount' }
       }
     }
   ]).exec((err, data) => {

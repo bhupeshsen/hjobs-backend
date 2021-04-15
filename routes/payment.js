@@ -4,7 +4,7 @@ const Razorpay = require('razorpay');
 const crypto = require("crypto");
 const config = require('../config/config');
 const User = require('../models/user').User;
-const Payment = require('../models/payment');
+const { Payment } = require('../models/payment');
 
 var instance = new Razorpay({
   key_id: config.razorpayKey,
