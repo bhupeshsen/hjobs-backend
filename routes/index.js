@@ -1,7 +1,7 @@
 const express = require('express');
 const fs = require('fs');
 const Plan = require('../models/plan');
-const {GovtJob} = require('../models/govt-job');
+const { GovtJob } = require('../models/govt-job');
 const job = require('../models/job');
 const Blog = require('../models/blog');
 const Feedback = require('../models/feedback');
@@ -199,9 +199,9 @@ router.route('/govt-jobs')
       ? { category: category, deadline: { $gte: newDate } }
       : { deadline: { $gte: newDate } }
 
-    GovtJob.find(query, (err, results) => {
+    GovtJob.find(query).sort({ createdAt: -1 }).exec((err, jobs) => {
       if (err) return res.status(400).json(err);
-      res.status(200).json(results);
+      res.status(200).json(jobs);
     });
   });
 

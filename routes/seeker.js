@@ -42,7 +42,10 @@ router.put('/profile', isValidUser, (req, res) => {
   var body = req.body;
   body.status = true;
 
-  User.findByIdAndUpdate({ _id: userId }, { seeker: body }, { new: true })
+  console.log(body)
+  const options = { new: true, safe: true, upsert: true };
+
+  User.findByIdAndUpdate({ _id: userId }, { $set: { seeker: body } }, options)
     .exec((err, user) => {
       if (err) return res.status(400).json(err);
       if (!user) return res.status(404).json({ message: 'User not found!' });
@@ -171,9 +174,10 @@ router.get('/job', isValidUser, (req, res) => {
       ? { postedBy: companyId, skills: { $regex: '.*' + skills + '.*', $options: 'i' } } : {}
     : { _id: jobId };
   const filter = { appliedBy: 0, hiredCandidates: 0, shortLists: 0 };
-  const model = jobId == undefined ? Job.find(query, filter) : Job.findById(query, filter)
+  const model = jobId == undefined ? Job.find(query, filter) : Job.findById(query, filter);
+  const filter2 = jobId == undefined ? 'name logo' : 'name logo about perks gallery';
 
-  model.populate('postedBy', 'name logo')
+  model.populate('postedBy', filter2)
     .sort({ createdAt: -1 })
     .exec((err, jobs) => {
       if (err) return res.status(400).json(err);

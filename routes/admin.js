@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const ObjectId = require('mongodb').ObjectID;
+const config = require('../config/config');
 const Company = require('../models/company');
 const { User } = require('../models/user');
 const { GovtJob } = require('../models/govt-job');
@@ -8,6 +9,18 @@ const { Payment } = require('../models/payment');
 const Job = require('../models/job');
 const Plan = require('../models/plan');
 const router = express.Router();
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const path = 'public/images/';
+    fs.mkdirSync(path, { recursive: true });
+    cb(null, path)
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname))
+  }
+});
+let upload = multer({ storage: storage });
 
 router.get('/dashboard', isValidUser, (req, res) => {
   const role = req.user.role;
@@ -125,6 +138,61 @@ router.get('/dashboard', isValidUser, (req, res) => {
     res.status(200).json(data[0])
   })
 });
+
+router.route('/govt-job')
+  .post(isValidUser, upload.single('image'), (req, res) => {
+    const body = req.body;
+
+    if (req.file != undefined) {
+      body.image = config.pathImages + req.file.filename;
+    } else {
+      body.image = null;
+    }
+
+    const govtJob = new GovtJob(body);
+    govtJob.save((err) => {
+      if (err) return res.status(400).json(err);
+      res.status(200).json({ message: 'Govt. Job successfully posted!', data: govtJob });
+    })
+  })
+  .put(isValidUser, (req, res) => {
+    const jobId = req.query.jobId;
+    const update = req.body;
+
+    if (req.file != undefined) {
+      body.image = config.pathImages + req.file.filename;
+    } else {
+      body.image = null;
+    }
+
+    GovtJob.findByIdAndUpdate({ _id: jobId }, update).exec((err, job) => {
+      if (err) return res.status(400).json(err);
+      res.status(200).json({ message: 'Govt. Job successfully updated!', data: job });
+    })
+  })
+  .delete(isValidUser, (req, res) => {
+    const jobId = req.query.jobId;
+
+    GovtJob.findByIdAndDelete({ _id: jobId }).exec((err) => {
+      if (err) return res.status(400).json(err);
+      res.status(200).json({ message: 'Govt. Job successfully deleted!' });
+    })
+  })
+
+/// Job Seeker
+router.route('/seeker')
+  .get(isValidUser, (req, res) => {
+    User.find({})
+      .populate('plan.currentPlan')
+      .populate('recruiter.plan.currentPlan')
+      .sort({ createdAt: -1 })
+      .exec((err, users) => {
+        if (err) return res.status(400).json(err);
+        res.status(200).json(users);
+      })
+  })
+  .put(isValidUser, (req, res) => { })
+  .get(isValidUser, (req, res) => { })
 
 function isValidUser(req, res, next) {
   if (req.isAuthenticated()) next();

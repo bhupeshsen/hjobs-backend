@@ -13,6 +13,7 @@ config.razorpaySecret = razorpaySecret_test;
 config.mailchimp = '08f19c46a4ac5068b330059771e226de-us2';
 
 // Documents
+config.pathImages = '/images/'
 config.pathDocuments = '/documents/'
 config.pathVideosLH = '/videos/local-hunar/'
 config.pathCompany = '/images/company/'
