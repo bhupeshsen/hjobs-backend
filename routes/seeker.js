@@ -42,10 +42,9 @@ router.put('/profile', isValidUser, (req, res) => {
   var body = req.body;
   body.status = true;
 
-  console.log(body)
   const options = { new: true, safe: true, upsert: true };
 
-  User.findByIdAndUpdate({ _id: userId }, { $set: { seeker: body } }, options)
+  User.findByIdAndUpdate({ _id: userId }, body, options)
     .exec((err, user) => {
       if (err) return res.status(400).json(err);
       if (!user) return res.status(404).json({ message: 'User not found!' });
