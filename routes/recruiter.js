@@ -90,7 +90,10 @@ router.route('/job')
       ? Job.findById({ _id: jobId, postedBy: companyId })
       : Job.find({ postedBy: companyId });
 
-    query.populate('appliedBy.user', 'name email photo')
+    query
+      .populate('appliedBy.user', 'name email photo')
+      .populate('shortLists', 'name email photo')
+      .populate('hiredCandidates', 'name email photo')
       .exec((err, doc) => {
         if (err) return res.status(400).json(err);
         if (!doc) return res.status(404).json({ message: 'Job not found!' });

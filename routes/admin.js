@@ -182,9 +182,8 @@ router.route('/govt-job')
 /// Job Seeker
 router.route('/seeker')
   .get(isValidUser, (req, res) => {
-    User.find({})
+    User.find({}, { recruiter: 0, customer: 0, provider: 0, hunar: 0 })
       .populate('plan.currentPlan')
-      .populate('recruiter.plan.currentPlan')
       .sort({ createdAt: -1 })
       .exec((err, users) => {
         if (err) return res.status(400).json(err);
