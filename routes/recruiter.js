@@ -91,7 +91,7 @@ router.route('/job')
       : Job.find({ postedBy: companyId });
 
     query
-      .populate('appliedBy.user', 'name email photo')
+      .populate('appliedBy.user', 'name mobile email photo seeker.iAm seeker.desiredSalary seeker.resume')
       .populate('shortLists', 'name email photo')
       .populate('hiredCandidates', 'name email photo')
       .exec((err, doc) => {
