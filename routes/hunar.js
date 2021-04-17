@@ -9,7 +9,9 @@ const router = express.Router();
 
 const storageV = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'public/videos/local-hunar/');
+    const path = 'public/videos/local-hunar/';
+    fs.mkdirSync(path, { recursive: true });
+    cb(null, path)
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + '.mp4');
