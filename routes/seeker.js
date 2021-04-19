@@ -6,7 +6,7 @@ const ObjectId = require('mongodb').ObjectID;
 const { User } = require('../models/user');
 const { Job } = require('../models/job');
 const CustomAlert = require('../models/custom-alert');
-const Company = require('../models/company');
+const { Company } = require('../models/company');
 const router = express.Router();
 
 const compiledFunction = pug.compileFile(__dirname + '/../views/resume.pug');

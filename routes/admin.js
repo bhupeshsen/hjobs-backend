@@ -2,7 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const ObjectId = require('mongodb').ObjectID;
 const config = require('../config/config');
-const Company = require('../models/company');
+const { Company } = require('../models/company');
 const { User } = require('../models/user');
 const { GovtJob } = require('../models/govt-job');
 const { Payment } = require('../models/payment');
@@ -182,8 +182,9 @@ router.route('/govt-job')
 /// User
 router.route('/user')
   .get(isValidUser, (req, res) => {
-    User.find({}, { recruiter: 0 })
+    User.find({}, { recruiter: 0, password: 0 })
       .populate('plan.currentPlan')
+      .populate('provider.services')
       .sort({ createdAt: -1 })
       .exec((err, users) => {
         if (err) return res.status(400).json(err);
@@ -191,11 +192,45 @@ router.route('/user')
       })
   })
   .put(isValidUser, (req, res) => { })
-  .get(isValidUser, (req, res) => { })
+  .delete(isValidUser, (req, res) => { });
+
+/// Recruiter
+router.route('/recruiter')
+  .get(isValidUser, (req, res) => {
+    Company.find()
+      .populate({
+        path: 'user',
+        select: 'recruiter',
+        populate: {
+          path: 'recruiter.plan.currentPlan'
+        }
+      })
+      .sort({ createdAt: -1 })
+      .exec((err, companies) => {
+        if (err) return res.status(400).json(err);
+        res.status(200).json(companies);
+      })
+  })
 
 /// Local Hunar
 router.put('/video', isValidUser, (req, res) => {
+  const userId = req.query.id;
+  const videoId = req.query.videoId;
+  const status = req.body.status;
 
+  const message = status == '1'
+    ? 'Video successfully approved.'
+    : 'Video successfully rejected!';
+
+  User.findOneAndUpdate({
+    _id: ObjectId(userId),
+    'hunar.videos': { $elemMatch: { _id: ObjectId(videoId) } }
+  },
+    { $set: { "hunar.videos.$.status": status } },
+    { upsert: true, new: true }, (err, _) => {
+      if (err) return res.status(400).json(err);
+      res.status(200).json({ message: message });
+    });
 });
 
 function isValidUser(req, res, next) {

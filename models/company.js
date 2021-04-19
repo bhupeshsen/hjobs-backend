@@ -22,4 +22,5 @@ var schema = new Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 });
 
-module.exports = mongoose.model('Company', schema);
+const Company = mongoose.model('Company', schema);
+module.exports = { Company }
