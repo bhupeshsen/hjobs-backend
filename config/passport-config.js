@@ -76,7 +76,6 @@ passport.use('admin', new JWTStrategy({
   async function (jwtPayload, cb) {
     try {
       const user = await Admin.findById(jwtPayload._id);
-      console.log(user);
       return cb(null, user);
     }
     catch (err) {
@@ -94,7 +93,6 @@ passport.use('user', new JWTStrategy({
   async function (jwtPayload, cb) {
     try {
       const user = await User.findById(jwtPayload._id);
-      console.log(user)
       return cb(null, user);
     }
     catch (err) {

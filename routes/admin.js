@@ -6,7 +6,7 @@ const Company = require('../models/company');
 const { User } = require('../models/user');
 const { GovtJob } = require('../models/govt-job');
 const { Payment } = require('../models/payment');
-const Job = require('../models/job');
+const { Job } = require('../models/job');
 const Plan = require('../models/plan');
 const router = express.Router();
 
@@ -179,7 +179,7 @@ router.route('/govt-job')
     })
   })
 
-/// Job Seeker
+/// User
 router.route('/user')
   .get(isValidUser, (req, res) => {
     User.find({}, { recruiter: 0 })
@@ -192,6 +192,11 @@ router.route('/user')
   })
   .put(isValidUser, (req, res) => { })
   .get(isValidUser, (req, res) => { })
+
+/// Local Hunar
+router.put('/video', isValidUser, (req, res) => {
+
+});
 
 function isValidUser(req, res, next) {
   if (req.isAuthenticated()) next();

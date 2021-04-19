@@ -4,7 +4,7 @@ const pug = require('pug');
 const puppeteer = require('puppeteer');
 const ObjectId = require('mongodb').ObjectID;
 const { User } = require('../models/user');
-const Job = require('../models/job');
+const { Job } = require('../models/job');
 const CustomAlert = require('../models/custom-alert');
 const Company = require('../models/company');
 const router = express.Router();
@@ -164,6 +164,7 @@ router.route('/saved-company')
 // Company's Jobs ==>  GET /seeker/job?companyId=<Company Id>&skills=<Skills>
 // View Job       ==>  GET /seeker/job?jobId=<Job Id>
 router.get('/job', isValidUser, (req, res) => {
+  const userId = req.user._id;
   const companyId = req.query.companyId;
   const jobId = req.query.jobId;
   const skills = req.query.skills;
@@ -172,14 +173,17 @@ router.get('/job', isValidUser, (req, res) => {
     ? companyId != undefined
       ? { postedBy: companyId, skills: { $regex: '.*' + skills + '.*', $options: 'i' } } : {}
     : { _id: jobId };
-  const filter = { appliedBy: 0, hiredCandidates: 0, shortLists: 0 };
+  const filter = { hiredCandidates: 0, shortLists: 0 };
   const model = jobId == undefined ? Job.find(query, filter) : Job.findById(query, filter);
   const filter2 = jobId == undefined ? 'name logo' : 'name logo about perks gallery';
 
-  model.populate('postedBy', filter2)
+  model
+    .populate({ path: 'appliedBy.user', match: userId, select: '_id' })
+    .populate('postedBy', filter2)
     .sort({ createdAt: -1 })
     .exec((err, jobs) => {
       if (err) return res.status(400).json(err);
+      jobs.appliedBy = jobs.appliedBy.filter(m => m.user != null);
       res.status(200).json(jobs);
     });
 });
