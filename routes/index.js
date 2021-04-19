@@ -2,11 +2,11 @@ const express = require('express');
 const fs = require('fs');
 const Plan = require('../models/plan');
 const { GovtJob } = require('../models/govt-job');
-const { job } = require('../models/job');
+const { Job } = require('../models/job');
 const Blog = require('../models/blog');
 const Feedback = require('../models/feedback');
 const FAQ = require('../models/feedback');
-const user = require('../models/user').User;
+const { User } = require('../models/user');
 const router = express.Router();
 
 router.get('/home', (req, res) => {
@@ -131,7 +131,7 @@ router.get('/home', (req, res) => {
       address: 'Sec-34, Rohini, North Delhi, Pin- 110039'
     }],
     // [3] Videos
-    user.aggregate([
+    User.aggregate([
       { $match: { 'hunar.videos.status': 1 } },
       { $unwind: { path: '$hunar.videos', preserveNullAndEmptyArrays: true } },
       { $group: { _id: null, videos: { $addToSet: '$hunar.videos' } } },
@@ -151,7 +151,7 @@ router.get('/home', (req, res) => {
       { $replaceRoot: { newRoot: '$videos' } }
     ]),
     // [4] Latest Jobs
-    job.find({ deadline: { $gte: newDate }, createdAt: { $gte: lastDate } },
+    Job.find({ deadline: { $gte: newDate }, createdAt: { $gte: lastDate } },
       {
         title: 1, designation: 1, employmentType: 1,
         location: 1, skills: 1, salary: 1, deadline: 1, experience: 1
@@ -211,7 +211,7 @@ router.get('/latest-jobs', (_, res) => {
   const newDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
   const lastDate = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate(), 0, 0, 0);
 
-  job.find({ deadline: { $gte: newDate }, createdAt: { $gte: lastDate } },
+  Job.find({ deadline: { $gte: newDate }, createdAt: { $gte: lastDate } },
     {
       title: 1, designation: 1, employmentType: 1,
       location: 1, skills: 1, salary: 1, deadline: 1, experience: 1
@@ -394,7 +394,7 @@ router.get('/faq', (req, res) => {
 
 /// Local Hunar Videos
 router.get('/local-hunar-videos', (req, res) => {
-  user.aggregate([
+  Job.aggregate([
     { $match: { 'hunar.videos.status': 1 } },
     { $unwind: { path: '$hunar.videos', preserveNullAndEmptyArrays: true } },
     { $group: { _id: null, videos: { $addToSet: '$hunar.videos' } } },
