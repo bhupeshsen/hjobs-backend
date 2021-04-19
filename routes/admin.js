@@ -202,7 +202,7 @@ router.route('/recruiter')
       .populate({
         path: 'user',
         model: 'User',
-        select: 'recruiter',
+        select: 'recruiter name email mobile photo gender',
         populate: [{
           path: 'recruiter.plan.currentPlan',
           model: 'Plan',
