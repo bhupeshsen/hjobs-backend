@@ -19,6 +19,16 @@ var schema = new Schema({
     locality: { type: String, trim: true },
     pinCode: { type: Number }
   },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+    required: true
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now,
+    required: true
+  },
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 });
 

@@ -184,6 +184,7 @@ router.route('/user')
   .get(isValidUser, (req, res) => {
     User.find({}, { recruiter: 0, password: 0 })
       .populate('plan.currentPlan')
+      .populate('plan.payment')
       .populate('provider.services')
       .sort({ createdAt: -1 })
       .exec((err, users) => {
@@ -200,10 +201,15 @@ router.route('/recruiter')
     Company.find()
       .populate({
         path: 'user',
+        model: 'User',
         select: 'recruiter',
-        populate: {
-          path: 'recruiter.plan.currentPlan'
-        }
+        populate: [{
+          path: 'recruiter.plan.currentPlan',
+          model: 'Plan',
+        }, {
+          path: 'recruiter.plan.payment',
+          model: 'Payment',
+        }]
       })
       .sort({ createdAt: -1 })
       .exec((err, companies) => {
