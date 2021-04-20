@@ -7,6 +7,7 @@ const { User } = require('../models/user');
 const { GovtJob } = require('../models/govt-job');
 const { Payment } = require('../models/payment');
 const { Job } = require('../models/job');
+const { Blog } = require('../models/blog');
 const Plan = require('../models/plan');
 const router = express.Router();
 
@@ -238,6 +239,29 @@ router.put('/video', isValidUser, (req, res) => {
       res.status(200).json({ message: message });
     });
 });
+
+/// Blogs
+router.route('/blog')
+  .get(isValidUser, (_, res) => {
+    Blog.find({}, { content: 0 }).exec((err, blogs) => {
+      if (err) return res.status(400).json(err);
+      res.status(200).json(blogs);
+    });
+  })
+  .post(isValidUser, (req, res) => {
+    var body = req.body;
+    body.postedBy = req.user._id;
+
+    const blog = new Blog(body);
+    blog.save((err) => {
+      if (err) return res.status(400).json(err);
+      res.status(200).json({ message: 'Blog successfully posted!' });
+    });
+  })
+  .put(isValidUser, (req, res) => {
+
+  })
+  .delete(isValidUser, (req, res) => { })
 
 function isValidUser(req, res, next) {
   if (req.isAuthenticated()) next();

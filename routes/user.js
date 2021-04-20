@@ -75,35 +75,50 @@ router.put('/photo', picUpload.single('photo'), isValidUser, (req, res) => {
   })
 })
 
-router.put('/add-document', docUpload.array('docs', 2), isValidUser, (req, res) => {
-  const id = req.user._id;
-  const body = req.body;
-  const docs = req.files;
-  var files = [];
+router.route('/add-document')
+  .put(docUpload.array('docs', 2), isValidUser, (req, res) => {
+    const id = req.user._id;
+    const body = req.body;
+    const docs = req.files;
+    var files = [];
 
-  if (docs != undefined) {
-    docs.map(file => {
-      files.push(config.pathDocuments + file.filename);
-    });
-  }
+    if (docs != undefined) {
+      docs.map(file => {
+        files.push(config.pathDocuments + file.filename);
+      });
+    }
 
-  const update = {
-    $addToSet: {
-      documents: {
-        type: body.type,
-        files: files,
-        number: body.number
+    const update = {
+      $addToSet: {
+        documents: {
+          type: body.type,
+          files: files,
+          number: body.number
+        }
       }
     }
-  }
 
-  User.findByIdAndUpdate({ _id: id }, update,
-    { new: true, upsert: true }, (err, doc) => {
-      if (err) return res.status(400).json({ message: 'Bad Request', error: err });
-      res.status(200).json({ message: 'Documents successfully updated!', user: doc });
-    })
+    User.findByIdAndUpdate({ _id: id }, update,
+      { new: true, upsert: true }, (err, doc) => {
+        if (err) return res.status(400).json({ message: 'Bad Request', error: err });
+        res.status(200).json({ message: 'Documents successfully updated!', user: doc });
+      })
 
-});
+  })
+  .delete(isValidUser, (req, res) => {
+    const userId = req.user._id;
+    const docId = req.query.docId;
+
+    const update = { $pull: { documents: { _id: docId } } };
+    const options = { safe: true, upsert: true, new: true };
+
+    User.findByIdAndUpdate({ _id: userId }, update, options)
+      .exec((err, doc) => {
+        if (err) return res.status(400).json(err);
+        if (!doc) return res.status(404).json({ message: 'User not found!' });
+        res.status(200).json(doc);
+      })
+  });
 
 router.route('/education')
   .post(isValidUser, (req, res) => {
@@ -124,7 +139,7 @@ router.route('/education')
     const userId = req.user._id;
     const eduId = req.query.eduId;
 
-    const update = { $pull: { _id: eduId } };
+    const update = { $pull: { educations: { _id: eduId } } };
     const options = { safe: true, upsert: true, new: true };
 
     User.findByIdAndUpdate({ _id: userId }, update, options)

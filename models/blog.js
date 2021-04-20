@@ -12,6 +12,11 @@ var schema = new Schema({
     trim: true,
     required: true
   },
+  content: {
+    type: String,
+    trim: true,
+    required: true
+  },
   category: {
     type: String,
     trim: true,
@@ -20,6 +25,11 @@ var schema = new Schema({
   published: {
     type: Boolean,
     default: true
+  },
+  postedBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'Admin',
+    required: true
   },
   createdAt: {
     type: Date,
@@ -33,4 +43,5 @@ var schema = new Schema({
   }
 });
 
-module.exports = mongoose.model('Blog', schema);
+const Blog = mongoose.model('Blog', schema);
+module.exports = { Blog };
