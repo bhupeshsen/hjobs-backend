@@ -242,8 +242,12 @@ router.put('/video', isValidUser, (req, res) => {
 
 /// Blogs
 router.route('/blog')
-  .get(isValidUser, (_, res) => {
-    Blog.find({}, { content: 0 }).exec((err, blogs) => {
+  .get(isValidUser, (req, res) => {
+    const blogId = req.query.id;
+
+    const model = blogId != undefined ? Blog.findById({ _id: blogId }) : Blog.find({}, { content: 0 })
+
+    model.exec((err, blogs) => {
       if (err) return res.status(400).json(err);
       res.status(200).json(blogs);
     });

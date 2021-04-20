@@ -68,7 +68,7 @@ router.put('/photo', picUpload.single('photo'), isValidUser, (req, res) => {
   }
 
   User.findByIdAndUpdate({ _id: id },
-    { photo: '/images/' + req.file.filename }
+    { photo: '/images/' + req.file.filename }, { new: true }
   ).exec((err, doc) => {
     if (err) return res.status(400).json({ message: 'Bad Request', error: err });
     res.status(200).json({ message: 'Photo successfully updated!', user: doc });
