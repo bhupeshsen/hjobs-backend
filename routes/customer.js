@@ -28,15 +28,12 @@ router.get('/search', isValidUser, (req, res) => {
   const search = req.query.q;
 
   const query = {
-    _id: { $ne: userId },
-    'provider.services': { $regex: '^' + search + '$', $options: 'i' }
+    user: { $ne: userId },
+    serviceName: { $regex: '.*' + search + '.*', $options: 'i' }
   };
-  const filter = {
-    'provider.services': 1, name: 1, 'provider.disability': 1,
-    address: 1, 'provider.experience': 1, photo: 1
-  };
+  const filter = 'name provider.disability address provider.experience photo';
 
-  User.find(query, filter).exec((err, providers) => {
+  Service.find(query).populate('user', filter).exec((err, providers) => {
     if (err) return res.status(400).json(err);
     res.status(200).json(providers);
   });
