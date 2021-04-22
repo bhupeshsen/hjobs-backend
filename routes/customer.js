@@ -41,17 +41,22 @@ router.get('/search', isValidUser, (req, res) => {
 
 // Provider
 router.get('/providers', isValidUser, (req, res) => {
+  const userId = req.user._id;
   const category = req.query.category;
+  const users = [];
 
   const query = { categoryName: category };
   const filter = 'name mobile gender photo provider.experience provider.disability provider.gallery';
 
   Service.find(query)
-    .populate('user', filter)
-    .exec((err, service) => {
+    .populate({ path: 'user', select: filter, match: { _id: { $ne: userId } } })
+    .exec((err, services) => {
       if (err) return res.status(400).json(err);
-      if (service == 0) return res.status(200).json([]);
-      res.status(200).json(service[0].user)
+      if (services == 0) return res.status(200).json([]);
+
+      services = services.filter(m => m.user != null);
+      services.map(m => users.push(m.user));
+      res.status(200).json(users)
     });
 });
 
