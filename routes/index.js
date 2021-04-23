@@ -4,6 +4,7 @@ const Plan = require('../models/plan');
 const { GovtJob } = require('../models/govt-job');
 const { Job } = require('../models/job');
 const { Blog } = require('../models/blog');
+const { Company } = require('../models/company');
 const Feedback = require('../models/feedback');
 const FAQ = require('../models/feedback');
 const { User } = require('../models/user');
@@ -426,7 +427,65 @@ router.get('/top-companies', (req, res) => {
 });
 
 /// Search Job
-router.get('/')
+router.get('/search-jobs', (req, res) => {
+  const location = req.query.location;
+  const keywords = req.query.keywords;
+
+  const today = new Date();
+  const newDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
+
+  Job.aggregate([
+    {
+      $match: {
+        $and: [
+          {
+            $or: [
+              { location: { $regex: '.*' + location + '.*', $options: 'i' } },
+              {
+                'boost.multiState': false, 'boost.expiryDate': { $gte: newDate },
+                location: { $regex: '.*' + location + '.*', $options: 'i' }
+              },
+              {
+                'boost.multiState': true, 'boost.expiryDate': { $gte: newDate },
+                location: { $regex: '.*', $options: 'i' }
+              },
+            ]
+          },
+          {
+            $or: [
+              { skills: { $regex: '.*' + keywords + '.*', $options: 'i' } },
+              { designation: { $regex: '.*' + keywords + '.*', $options: 'i' } }
+            ]
+          },
+          { deadline: { $gte: newDate } }
+        ]
+      }
+    },
+    {
+      $lookup: {
+        from: Company.collection.name,
+        let: { postedBy: '$postedBy', name: keywords },
+        pipeline: [
+          {
+            $match: { $expr: { $eq: ['$_id', '$$postedBy'] } },
+          },
+          { $project: { name: 1, photo: 1 } }
+        ],
+        as: 'company'
+      }
+    },
+    { $unwind: { 'path': '$company', 'preserveNullAndEmptyArrays': true } },
+    { $project: { appliedBy: 0, hiredCandidates: 0, extraFields: 0 } },
+    { $sort: { 'boost.expiryDate': -1 } },
+  ], (err, doc) => {
+    if (doc) {
+      res.status(200).json(doc);
+    } else {
+      if (err) return res.status(400).json(err);
+      res.status(204).json({ message: 'Content not available.' });
+    }
+  });
+})
 
 /// Feedback
 router.post('/feedback', (req, res) => {
