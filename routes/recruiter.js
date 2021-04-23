@@ -365,6 +365,31 @@ router.get('/conversations/:from/:to', isValidUser, (req, res) => {
   });
 });
 
+// Search
+router.get('/search', isValidUser, (req, res) => {
+  const userId = req.user._id;
+  const desireSalary = req.query.desireSalary;
+  const jobType = req.query.jobType;
+  const empType = req.query.empType;
+  const qualifications = req.query.qualifications;
+  const pinCode = req.query.pinCode;
+  const location = req.query.location;
+  const skills = req.query.skills;
+
+  const query = {
+    _id: { $ne: userId }, 'seeker.desireSalary': desireSalary,
+    'seeker.jobType': jobType, 'seeker.empType': empType,
+    'address.pinCode': pinCode, 'address.city': location,
+    'seeker.skills': skills
+  }
+  const filter = 'name email mobile photo';
+
+  User.find(query, filter).exec((err, users) => {
+    if (err) return res.status(400).json(err);
+    res.status(200).json(users);
+  });
+});
+
 
 function isValidUser(req, res, next) {
   if (req.isAuthenticated()) next();

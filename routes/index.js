@@ -425,6 +425,9 @@ router.get('/top-companies', (req, res) => {
   }]);
 });
 
+/// Search Job
+router.get('/')
+
 /// Feedback
 router.post('/feedback', (req, res) => {
   const body = req.body;
