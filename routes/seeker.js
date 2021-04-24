@@ -98,7 +98,14 @@ router.route('/saved-jobs')
     const filter = '-hiredCandidates -appliedBy -shortLists';
 
     User.findById({ _id: userId })
-      .populate('seeker.savedJobs', filter)
+      .populate({
+        path: 'seeker.savedJobs',
+        select: filter,
+        populate: {
+          path: 'postedBy',
+          select: 'name photo'
+        }
+      })
       .exec((err, user) => {
         if (err) return res.status(400).json(err);
         res.status(200).json(user.seeker.savedJobs);

@@ -8,6 +8,7 @@ const { GovtJob } = require('../models/govt-job');
 const { Payment } = require('../models/payment');
 const { Job } = require('../models/job');
 const { Blog } = require('../models/blog');
+const { FSE } = require('../models/business/fse');
 const Plan = require('../models/plan');
 const router = express.Router();
 
@@ -194,7 +195,14 @@ router.route('/user')
       })
   })
   .put(isValidUser, (req, res) => { })
-  .delete(isValidUser, (req, res) => { });
+  .delete(isValidUser, (req, res) => {
+    const userId = req.query.id;
+    User.findByIdAndDelete({ _id: userId })
+      .exec((err, _) => {
+        if (err) return res.status(400).json(err);
+        res.status(200).json({ message: 'User successfully deleted!' });
+      });
+  });
 
 /// Recruiter
 router.route('/recruiter')
@@ -240,6 +248,43 @@ router.put('/video', isValidUser, (req, res) => {
     });
 });
 
+/// FSE
+router.route('/fse')
+  .get(isValidUser, (req, res) => {
+    const userId = req.query.id;
+
+    if (userId != undefined) {
+      FSE.findById({ _id: userId }).exec((err, users) => {
+        if (err) return res.status(400).json(err);
+        res.status(200).json(users);
+      });
+    } else {
+      FSE.find().exec((err, users) => {
+        if (err) return res.status(400).json(err);
+        res.status(200).json(users);
+      });
+    }
+  })
+  .post(isValidUser, (req, res) => {
+
+  })
+  .put(isValidUser, (req, res) => {
+    const userId = req.query.id;
+    FSE.findByIdAndUpdate({ _id: userId }, req.body, { new: true })
+      .exec((err, _) => {
+        if (err) return res.status(400).json(err);
+        res.status(200).json({ message: 'FSE successfully updated!' });
+      })
+  })
+  .delete(isValidUser, (req, res) => {
+    const userId = req.query.id;
+    FSE.findByIdAndDelete({ _id: userId })
+      .exec((err, _) => {
+        if (err) return res.status(400).json(err);
+        res.status(200).json({ message: 'FSE successfully deleted!' });
+      });
+  });
+
 /// Blogs
 router.route('/blog')
   .get(isValidUser, (req, res) => {
@@ -265,7 +310,14 @@ router.route('/blog')
   .put(isValidUser, (req, res) => {
 
   })
-  .delete(isValidUser, (req, res) => { })
+  .delete(isValidUser, (req, res) => {
+    const blogId = req.query.id;
+    Blog.findByIdAndDelete({ _id: blogId })
+      .exec((err, _) => {
+        if (err) return res.status(400).json(err);
+        res.status(200).json({ message: 'Blog successfully deleted!' });
+      });
+  })
 
 function isValidUser(req, res, next) {
   if (req.isAuthenticated()) next();
