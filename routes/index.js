@@ -469,13 +469,13 @@ router.get('/search-jobs', (req, res) => {
           {
             $match: { $expr: { $eq: ['$_id', '$$postedBy'] } },
           },
-          { $project: { name: 1, photo: 1 } }
+          { $project: { name: 1, logo: 1 } }
         ],
-        as: 'company'
+        as: 'postedBy'
       }
     },
-    { $unwind: { 'path': '$company', 'preserveNullAndEmptyArrays': true } },
-    { $project: { appliedBy: 0, hiredCandidates: 0, extraFields: 0 } },
+    { $unwind: { 'path': '$postedBy', 'preserveNullAndEmptyArrays': true } },
+    { $project: { appliedBy: 0, hiredCandidates: 0, shortLists: 0, extraFields: 0 } },
     { $sort: { 'boost.expiryDate': -1 } },
   ], (err, doc) => {
     if (doc) {

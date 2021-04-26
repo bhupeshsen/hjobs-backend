@@ -266,7 +266,13 @@ router.route('/fse')
     }
   })
   .post(isValidUser, (req, res) => {
+    const body = req.body;
+    const fse = new FSE(body);
 
+    fse.save((err) => {
+      if (err) return res.status(400).json(err);
+      req.status(200).json({ message: 'FSE successfully registered!' })
+    })
   })
   .put(isValidUser, (req, res) => {
     const userId = req.query.id;
