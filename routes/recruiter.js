@@ -382,7 +382,10 @@ router.get('/search', isValidUser, (req, res) => {
     'address.pinCode': pinCode, 'address.city': location,
     'seeker.skills': skills
   }
-  const filter = 'name email mobile photo';
+  const filter = 'name email mobile photo address';
+
+  Object.keys(query).forEach(key => query[key] === undefined ? delete query[key] : {});
+  console.log(query);
 
   User.find(query, filter).exec((err, users) => {
     if (err) return res.status(400).json(err);

@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const ObjectId = require('mongodb').ObjectID;
 const config = require('../config/config');
+const { Admin } = require('../models/admin');
 const { Company } = require('../models/company');
 const { User } = require('../models/user');
 const { GovtJob } = require('../models/govt-job');
@@ -23,6 +24,19 @@ const storage = multer.diskStorage({
   }
 });
 let upload = multer({ storage: storage });
+
+router.route('/token')
+  .put(isValidUser, (req, res) => {
+    const user = req.user;
+    const body = req.body;
+
+    Admin.findByIdAndUpdate({ _id: user._id },
+      { fcmToken: body.token })
+      .exec((err, _) => {
+        if (err) return res.status(400).json(err);
+        res.status(200).json({ message: 'Token successfully updated!' });
+      })
+  });
 
 router.get('/dashboard', isValidUser, (req, res) => {
   const role = req.user.role;
