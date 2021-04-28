@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path')
 const ObjectId = require('mongodb').ObjectID;
 const config = require('../config/config');
+const mailScript = require('../helper/mail-script');
 const { Admin } = require('../models/admin');
 const { Company } = require('../models/company');
 const { User } = require('../models/user');
@@ -13,6 +14,8 @@ const { Job } = require('../models/job');
 const { Blog } = require('../models/blog');
 const { FSE } = require('../models/business/fse');
 const Plan = require('../models/plan');
+const mail = require('../helper/mail');
+const states = require('../helper/states');
 const router = express.Router();
 
 const storage = multer.diskStorage({
@@ -309,20 +312,53 @@ router.route('/fse')
       body.photo = config.pathImages + photo[0].filename
     }
 
-    console.log(body);
+    if (body.password == undefined || body.password == '') {
+      mail.passwordMail(req, body.firstName, body.email, 'fse');
+    }
 
     const fse = new FSE(body);
-
     fse.save((err) => {
       if (err) return res.status(400).json(err);
       res.status(200).json({ message: 'FSE successfully registered!' })
     })
   })
-  .put(isValidUser, (req, res) => {
+  .put(isValidUser, async (req, res) => {
     const userId = req.query.id;
-    FSE.findByIdAndUpdate({ _id: userId }, req.body, { new: true })
+    const status = req.query.status;
+    const state = req.body.state;
+
+    var update = {};
+
+    const currentDate = new Date();
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const day = currentDate.getDate();
+    const nextDate = new Date(year + 5, month, day);
+
+    const stateCode = states.getStateCodeByStateName(state);
+    const code = await generatedCode('fse');
+
+    if (status == 'approve') {
+      update = {
+        approved: true,
+        updatedAt: currentDate,
+        approvedDate: currentDate,
+        expiryDate: nextDate,
+        fseCode: `FSE${stateCode}${code}`,
+        code: parseInt(code)
+      }
+    } else {
+      update = req.body;
+    }
+
+    FSE.findByIdAndUpdate({ _id: userId }, update, { new: true })
       .exec((err, _) => {
         if (err) return res.status(400).json(err);
+
+        if (status == 'approve') {
+          const htmlMessage = mailScript.fseApprove(fse.firstName, fse.email, fse.fseCode);
+          mail.sendMail(doc.email, doc.firstName, 'FSE Code', '', htmlMessage);
+        }
         res.status(200).json({ message: 'FSE successfully updated!' });
       })
   })
