@@ -1,5 +1,7 @@
 const express = require('express');
 const multer = require('multer');
+const fs = require('fs');
+const path = require('path')
 const ObjectId = require('mongodb').ObjectID;
 const config = require('../config/config');
 const { Admin } = require('../models/admin');
@@ -23,6 +25,7 @@ const storage = multer.diskStorage({
     cb(null, Date.now() + path.extname(file.originalname))
   }
 });
+
 let upload = multer({ storage: storage });
 
 router.route('/token')
@@ -263,6 +266,12 @@ router.put('/video', isValidUser, (req, res) => {
 });
 
 /// FSE
+const fseUpload = upload.fields([
+  { name: 'documents[aadharCard][aadharF]', maxCount: 1 },
+  { name: 'documents[aadharCard][aadharB]', maxCount: 1 },
+  { name: 'documents[panCard][image]', maxCount: 1 },
+  { name: 'photo', maxCount: 1 }
+]);
 router.route('/fse')
   .get(isValidUser, (req, res) => {
     const userId = req.query.id;
@@ -279,8 +288,27 @@ router.route('/fse')
       });
     }
   })
-  .post(isValidUser, (req, res) => {
-    const body = req.body;
+  .post(fseUpload, isValidUser, (req, res) => {
+    var body = req.body;
+
+    const aadharF = req.files['documents[aadharCard][aadharF]'];
+    const aadharB = req.files['documents[aadharCard][aadharB]'];
+    const panCard = req.files['documents[panCard][image]'];
+    const photo = req.files['photo'];
+
+    if (aadharF != undefined && aadharB != undefined) {
+      body.documents.aadharCard.aadharF = config.pathImages + aadharF[0].filename;
+      body.documents.aadharCard.aadharB = config.pathImages + aadharB[0].filename;
+    }
+
+    if (panCard != undefined) {
+      body.documents.panCard.image = config.pathImages + panCard[0].filename
+    }
+
+    if (photo != undefined) {
+      body.photo = config.pathImages + photo[0].filename
+    }
+
     const fse = new FSE(body);
 
     fse.save((err) => {

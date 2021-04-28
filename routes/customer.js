@@ -60,6 +60,28 @@ router.get('/providers', isValidUser, (req, res) => {
     });
 });
 
+// Services
+router.get('/services', isValidUser, (req, res) => {
+  const category = req.query.category;
+  const providerId = req.query.providerId;
+
+  var services = [];
+
+  Service.findOne({ user: ObjectId(providerId) }, (err, doc) => {
+    if (err) return res.status(400).json(err);
+    if (doc == null) return res.status(200).json([]);
+
+    doc.forEach(element => {
+      if (element.categoryName == category) {
+        services.push(element);
+      }
+    });
+
+    res.status(200).json(services);
+  });
+
+});
+
 // Orders
 router.route('/order')
   .get(isValidUser, (req, res) => {

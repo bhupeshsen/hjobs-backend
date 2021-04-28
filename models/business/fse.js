@@ -97,13 +97,6 @@ var schema = new Schema({
   password: { type: String },
   passwordResetToken: String,
   passwordResetExpires: Date,
-  payment: {
-    status: { type: Boolean, default: false },
-    amount: Number,
-    order_id: String,
-    payment_id: String,
-    createdAt: Date
-  },
   wallet: { type: Number, default: 0 },
   code: Number,
   fcmToken: { type: String, default: null },
