@@ -309,11 +309,13 @@ router.route('/fse')
       body.photo = config.pathImages + photo[0].filename
     }
 
+    console.log(body);
+
     const fse = new FSE(body);
 
     fse.save((err) => {
       if (err) return res.status(400).json(err);
-      req.status(200).json({ message: 'FSE successfully registered!' })
+      res.status(200).json({ message: 'FSE successfully registered!' })
     })
   })
   .put(isValidUser, (req, res) => {
