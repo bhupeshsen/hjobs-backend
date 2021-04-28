@@ -21,6 +21,7 @@ router.get('/dashboard', isValidUser, (req, res) => {
 
     const appliedJobs = user.seeker.appliedJobs;
     const savedCompany = user.seeker.savedCompany;
+    const savedJobs = user.seeker.savedJobs;
 
     Job.find({ skills: { $in: user.seeker.skills } }, { _id: 1 })
       .exec((err, rJobs) => {
@@ -28,7 +29,8 @@ router.get('/dashboard', isValidUser, (req, res) => {
         const response = {
           applied: appliedJobs != null ? appliedJobs.length : 0,
           savedCompany: savedCompany != null ? savedCompany.length : 0,
-          recommendedJobs: rJobs != null ? rJobs.length : 0
+          recommendedJobs: rJobs != null ? rJobs.length : 0,
+          savedJobs: savedJobs != null ? savedJobs.length : 0
         }
 
         res.status(200).json(response);

@@ -46,7 +46,7 @@ router.get('/providers', isValidUser, (req, res) => {
   const users = [];
 
   const query = { categoryName: category };
-  const filter = 'name mobile gender photo provider.experience provider.disability provider.gallery';
+  const filter = 'name mobile gender address photo provider.experience provider.disability provider.gallery';
 
   Service.find(query)
     .populate({ path: 'user', select: filter, match: { _id: { $ne: userId } } })
@@ -56,7 +56,8 @@ router.get('/providers', isValidUser, (req, res) => {
 
       services = services.filter(m => m.user != null);
       services.map(m => users.push(m.user));
-      res.status(200).json(users)
+      const unique = [...new Set(users)]
+      res.status(200).json(unique)
     });
 });
 
@@ -67,7 +68,7 @@ router.get('/services', isValidUser, (req, res) => {
 
   var services = [];
 
-  Service.findOne({ user: ObjectId(providerId) }, (err, doc) => {
+  Service.find({ user: ObjectId(providerId) }, (err, doc) => {
     if (err) return res.status(400).json(err);
     if (doc == null) return res.status(200).json([]);
 
