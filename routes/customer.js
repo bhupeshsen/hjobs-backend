@@ -95,6 +95,7 @@ router.route('/order')
     const model = orderId != null ? Order.findOne(query) : Order.find(query);
 
     model.populate('provider', 'name photo address mobile -_id')
+      .populate('services')
       .sort({ createdAt: -1 })
       .exec((err, orders) => {
         if (err) return res.status(400).json(err);

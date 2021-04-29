@@ -13,6 +13,8 @@ const { Payment } = require('../models/payment');
 const { Job } = require('../models/job');
 const { Blog } = require('../models/blog');
 const { FSE } = require('../models/business/fse');
+const { Advisor } = require('../models/business/advisor');
+const { BC, CM } = require('../models/business/business');
 const Plan = require('../models/plan');
 const mail = require('../helper/mail');
 const states = require('../helper/states');
@@ -352,14 +354,14 @@ router.route('/fse')
     }
 
     FSE.findByIdAndUpdate({ _id: userId }, update, { new: true })
-      .exec((err, _) => {
+      .exec((err, fse) => {
         if (err) return res.status(400).json(err);
 
-        if (status == 'approve') {
-          const htmlMessage = mailScript.fseApprove(fse.firstName, fse.email, fse.fseCode);
-          mail.sendMail(doc.email, doc.firstName, 'FSE Code', '', htmlMessage);
-        }
-        res.status(200).json({ message: 'FSE successfully updated!' });
+        // if (status == 'approve') {
+        //   const htmlMessage = mailScript.fseApprove(fse.firstName, fse.email, fse.fseCode);
+        //   mail.sendMail(doc.email, doc.firstName, 'FSE Code', '', htmlMessage);
+        // }
+        res.status(200).json({ message: 'FSE successfully updated!', data: fse });
       })
   })
   .delete(isValidUser, (req, res) => {
@@ -404,6 +406,17 @@ router.route('/blog')
         res.status(200).json({ message: 'Blog successfully deleted!' });
       });
   })
+
+// Generate BC Code     {MP0001}
+// Generate BA Code     {ADMP0001}
+const generatedCode = async (type) => {
+  var model = type == 'bc' ? BC : type == 'ba' ? Advisor : FSE;
+  var bc = await model.findOne().sort({ code: -1 }).exec();
+  var _code = bc.code == undefined ? 0 : bc.code;
+  var len = 5 - ('' + parseInt(_code) + 1).length;
+  var code = (len > 0 ? new Array(++len).join('0') : '') + (parseInt(_code) + 1);
+  return code;
+};
 
 function isValidUser(req, res, next) {
   if (req.isAuthenticated()) next();
