@@ -11,6 +11,9 @@ const randToken = require('rand-token');
 const mail = require('../helper/mail');
 const { User } = require('../models/user');
 const { Admin } = require('../models/admin');
+const { FSE } = require('../models/business/fse');
+const { Advisor } = require('../models/business/advisor');
+const { BC, CM } = require('../models/business/business');
 
 // PRIVATE and PUBLIC key
 var privateKEY = fs.readFileSync(__dirname + '/../config/jwt.key', 'utf8');
@@ -270,6 +273,63 @@ router.post('/provider/google', (req, res) => {
         token: JWTToken, refreshToken: refreshToken
       });
     });
+});
+
+/// Business Partner
+router.post('/business/:type/login', (req, res, next) => {
+  const type = req.params.type;
+
+  const model = type == 'fse' ? FSE
+    : type == 'ba' ? Advisor : type == 'bc' ? BC
+      : type == 'cm' ? CM : null;
+
+  passport.authenticate(`${type}-local`, function (err, user, info) {
+    if (err) { return res.status(401).json(err); }
+    if (!user) { return res.status(401).json(info); }
+
+    const code = type == 'fse' ? user.fseCode
+      : type == 'ba' ? user.baCode : type == 'bc' ? user.bcCode
+        : type == 'cm' ? user.cmCode : null;
+
+    req.logIn(user, function (err) {
+      if (err) { return res.status(401).json(err); }
+
+      model.findByIdAndUpdate({ _id: user._id },
+        { fcmToken: req.body.fcmToken },
+        { password: 0 }, (err) => {
+          if (err) { return res.status(401).json(err); }
+        });
+
+      // JWT Token
+      const JWTToken = jwt.sign({
+        _id: user._id,
+        email: user.email,
+        code: code,
+        userType: user.userType
+      }, privateKEY, {
+        issuer: issuer, audience: audience,
+        algorithm: 'RS256', expiresIn: "24h"
+      });
+
+      // Refresh Token
+      const refreshToken = randToken.uid(256);
+      const _user = {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        mobile: user.mobile,
+        approved: user.approved,
+        disabled: user.disabled,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      }
+
+      return res.status(200).json({
+        message: 'Welcome back', user: _user,
+        token: JWTToken, refreshToken: refreshToken
+      });
+    });
+  })(req, res, next);
 });
 
 function generateReferralCode() {

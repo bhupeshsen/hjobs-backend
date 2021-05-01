@@ -1,10 +1,10 @@
 const express = require('express');
 const multer = require('multer');
+const fs = require('fs');
 const mongoose = require('mongoose');
 const ObjectId = mongoose.mongo.ObjectID;
-const path = require('path');
 const config = require('../config/config');
-const user = require('../models/user').User;
+const { User } = require('../models/user');
 const router = express.Router();
 
 const storageV = multer.diskStorage({
@@ -34,7 +34,7 @@ router.post('/video', vidUpload.single('video'), isValidUser, (req, res) => {
 
   var update = { 'hunar.status': true, $push: { 'hunar.videos': video } }
 
-  user.findByIdAndUpdate({ _id: localHunarId },
+  User.findByIdAndUpdate({ _id: localHunarId },
     update, { upsert: true, new: true }, (err, doc) => {
       if (err) return res.status(400).json(err);
       res.status(200).json({ message: 'Video successfully uploaded!' });
@@ -44,7 +44,7 @@ router.post('/video', vidUpload.single('video'), isValidUser, (req, res) => {
 router.route('/video')
   .get(isValidUser, (req, res) => {
     const localHunarId = req.user._id;
-    user.findById({ _id: localHunarId }, { hunar: 1 }).exec((err, results) => {
+    User.findById({ _id: localHunarId }, { hunar: 1 }).exec((err, results) => {
       if (err) return res.status(400).json(err);
       res.status(200).json(results.hunar.videos);
     })
@@ -54,7 +54,7 @@ router.route('/video')
     const videoId = req.query.videoId;
     const description = req.body.description;
 
-    user.findOneAndUpdate({
+    User.findOneAndUpdate({
       _id: ObjectId(localHunarId),
       'hunar.videos': { $elemMatch: { _id: ObjectId(videoId) } }
     },
@@ -68,7 +68,7 @@ router.route('/video')
     const localHunarId = req.user._id;
     const videoId = req.query.videoId;
 
-    user.findByIdAndUpdate({ _id: ObjectId(localHunarId) },
+    User.findByIdAndUpdate({ _id: ObjectId(localHunarId) },
       { $pull: { 'hunar.videos': { _id: ObjectId(videoId) } } }, (err, _) => {
         if (err) return res.status(400).json(err);
         res.status(200).json({ message: 'Video successfully removed!' });

@@ -5,6 +5,9 @@ const LocalStrategy = require('passport-local').Strategy;
 
 const { User } = require('../models/user');
 const { Admin } = require('../models/admin');
+const { FSE } = require('../models/business/fse');
+const { Advisor } = require('../models/business/advisor');
+const { BC, CM } = require('../models/business/business');
 
 const JWTStrategy = passportJWT.Strategy;
 const ExtractJWT = passportJWT.ExtractJwt;
@@ -58,6 +61,79 @@ passport.use('user-local', new LocalStrategy({
   }
 ));
 
+// Business Partner
+passport.use('cm-local', new LocalStrategy({
+  usernameField: 'email',
+  passwordField: 'password'
+},
+  function (username, password, done) {
+    CM.findOne({ email: username, deleted: false }, function (err, user) {
+      if (err) { return done(err); }
+      if (!user) {
+        return done(null, false, { message: 'Invalid credentials!' });
+      }
+      if (user.password == undefined || !user.isValid(password)) {
+        return done(null, false, { message: 'Invalid credentials!' });
+      }
+      return done(null, user);
+    });
+  }
+));
+
+passport.use('bc-local', new LocalStrategy({
+  usernameField: 'email',
+  passwordField: 'password'
+},
+  function (username, password, done) {
+    BC.findOne({ email: username, deleted: false }, function (err, user) {
+      if (err) { return done(err); }
+      if (!user) {
+        return done(null, false, { message: 'Invalid credentials!' });
+      }
+      if (user.password == undefined || !user.isValid(password)) {
+        return done(null, false, { message: 'Invalid credentials!' });
+      }
+      return done(null, user);
+    });
+  }
+));
+
+passport.use('ba-local', new LocalStrategy({
+  usernameField: 'email',
+  passwordField: 'password'
+},
+  function (username, password, done) {
+    Advisor.findOne({ email: username }, function (err, user) {
+      if (err) { return done(err); }
+      if (!user) {
+        return done(null, false, { message: 'Invalid credentials!' });
+      }
+      if (user.password == undefined || !user.isValid(password)) {
+        return done(null, false, { message: 'Invalid credentials!' });
+      }
+      return done(null, user);
+    });
+  }
+));
+
+passport.use('fse-local', new LocalStrategy({
+  usernameField: 'email',
+  passwordField: 'password'
+},
+  function (username, password, done) {
+    FSE.findOne({ email: username }, function (err, user) {
+      if (err) { return done(err); }
+      if (!user) {
+        return done(null, false, { message: 'Invalid credentials!' });
+      }
+      if (user.password == undefined || !user.isValid(password)) {
+        return done(null, false, { message: 'Invalid credentials!' });
+      }
+      return done(null, user);
+    });
+  }
+));
+
 passport.serializeUser(function (user, done) {
   done(null, user);
 });
@@ -93,6 +169,75 @@ passport.use('user', new JWTStrategy({
   async function (jwtPayload, cb) {
     try {
       const user = await User.findById(jwtPayload._id);
+      return cb(null, user);
+    }
+    catch (err) {
+      return cb(err);
+    }
+  }
+));
+
+// Business Partner
+passport.use('cm', new JWTStrategy({
+  jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken(),
+  secretOrKey: publicKEY,
+  issuer: issuer,
+  audience: audience
+},
+  async function (jwtPayload, cb) {
+    try {
+      const user = await CM.findById(jwtPayload._id);
+      return cb(null, user);
+    }
+    catch (err) {
+      return cb(err);
+    }
+  }
+));
+
+passport.use('bc', new JWTStrategy({
+  jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken(),
+  secretOrKey: publicKEY,
+  issuer: issuer,
+  audience: audience
+},
+  async function (jwtPayload, cb) {
+    try {
+      const user = await BC.findById(jwtPayload._id);
+      return cb(null, user);
+    }
+    catch (err) {
+      return cb(err);
+    }
+  }
+));
+
+passport.use('ba', new JWTStrategy({
+  jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken(),
+  secretOrKey: publicKEY,
+  issuer: issuer,
+  audience: audience
+},
+  async function (jwtPayload, cb) {
+    try {
+      const user = await Advisor.findById(jwtPayload._id);
+      return cb(null, user);
+    }
+    catch (err) {
+      return cb(err);
+    }
+  }
+));
+
+passport.use('fse', new JWTStrategy({
+  jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken(),
+  secretOrKey: publicKEY,
+  issuer: issuer,
+  audience: audience
+},
+  async function (jwtPayload, cb) {
+    try {
+      const user = await FSE.findById(jwtPayload._id);
       return cb(null, user);
     }
     catch (err) {
