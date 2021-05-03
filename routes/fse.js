@@ -10,29 +10,41 @@ router.route('/dashboard')
     const date = new Date();
     const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
     const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-    const yearStart = new Date(date.getFullYear(), 0, 1);
-    const yearEnd = new Date(date.getFullYear(), 12, 0);
+    const startYear = new Date(date.getFullYear(), 0, 1);
+    const endYear = new Date(date.getFullYear(), 12, 0);
 
     Payment.aggregate([
       { $match: { $and: [{ bcCode: { $ne: null } }, { bcCode: code }] } },
       {
-        facet: {
+        $facet: {
           monthPayments: [
             {
               $match: {
                 $and: [
                   { createdAt: { $lte: lastDay } },
-                  { $gte: ['$createdAt', firstDay] }
+                  { createdAt: { $gte: firstDay } }
                 ]
               }
-            },
-            // {
-            //   $project: {
-            //     monthEarning: { $cond: [{ $ifNull: ['$fseCode', undefined] }, { '$sum': '$monthPayments.payment' }, 0] },
-            //     // yearEarning: { $cond: [{ $ifNull: ['$fseCode', undefined] }, { '$sum': '$yearPayments.payment' }, 0] }
-            //   }
-            // }
+            }
+          ],
+          yearPayments: [
+            {
+              $match: {
+                $and: [
+                  { createdAt: { $lte: endYear } },
+                  { createdAt: { $gte: startYear } }
+                ]
+              }
+            }
           ]
+        }
+      },
+      {
+        $project: {
+          earning: {
+            year: { $sum: '$yearPayments.amount' },
+            month: { $sum: '$monthPayments.amount' }
+          }
         }
       }
     ]).exec((err, payments) => {

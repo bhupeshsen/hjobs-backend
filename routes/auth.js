@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const multer = require('multer');
 const path = require('path');
+const config = require('../config/config');
 const randToken = require('rand-token');
 
 const mail = require('../helper/mail');
@@ -275,7 +276,7 @@ router.post('/provider/google', (req, res) => {
     });
 });
 
-/// Business Partner
+/// Business Partner - Login
 router.post('/business/:type/login', (req, res, next) => {
   const type = req.params.type;
 
@@ -330,6 +331,59 @@ router.post('/business/:type/login', (req, res, next) => {
       });
     });
   })(req, res, next);
+});
+
+/// BC - Register
+var bcUpload = upload.fields([
+  { name: 'photo', maxCount: 1 },
+  { name: 'aadharCard[aadharF]', maxCount: 1 },
+  { name: 'aadharCard[aadharB]', maxCount: 1 },
+  { name: 'panCard[panCardUrl]', maxCount: 1 },
+  { name: 'identityProof[identityImage]', maxCount: 1 },
+  { name: 'residentialProof[proofImage]', maxCount: 1 },
+  { name: 'bank[bankPassbookUrl]', maxCount: 1 }
+]);
+router.post('/business/bc/register', bcUpload, (req, res) => {
+  var body = req.body;
+  body.password = BC.hashPassword(body.password)
+
+  if (body.addedByCode === 'null') {
+    body.addedByCode = null;
+  }
+
+  var photo = req.files['photo'];
+  var aadharF = req.files['aadharCard[aadharF]'];
+  var aadharB = req.files['aadharCard[aadharB]'];
+  var panCard = req.files['panCard[panCardUrl]'];
+  var identityProof = req.files['identityProof[identityImage]'];
+  var residentialProof = req.files['residentialProof[proofImage]'];
+  var bankPassbook = req.files['bank[bankPassbookUrl]'];
+
+  if (photo != undefined) {
+    body.photo = config.pathImages + photo[0].filename
+  }
+  if (aadharF != undefined && aadharB != undefined) {
+    body.aadharCard.aadharF = config.pathImages + aadharF[0].filename;
+    body.aadharCard.aadharB = config.pathImages + aadharB[0].filename;
+  }
+  if (panCard != undefined) {
+    body.panCard.panCardUrl = config.pathImages + panCard[0].filename
+  }
+  if (identityProof != undefined) {
+    body.identityProof.identityImage = config.pathImages + identityProof[0].filename
+  }
+  if (residentialProof != undefined) {
+    body.residentialProof.proofImage = config.pathImages + residentialProof[0].filename
+  }
+  if (bankPassbook != undefined) {
+    body.bank.bankPassbookUrl = config.pathImages + bankPassbook[0].filename
+  }
+
+  const bc = new BC(body);
+  bc.save(function (err) {
+    if (err) return res.status(400).json(err);
+    res.status(200).json({ message: 'Successfully registered!' });
+  })
 });
 
 function generateReferralCode() {

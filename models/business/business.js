@@ -243,7 +243,7 @@ var schema = new Schema({
       address: String
     },
   },
-  profilePic: { type: String },
+  photo: { type: String },
   bank: {
     accountNumber: { type: Number },
     bankHolderName: { type: String },
