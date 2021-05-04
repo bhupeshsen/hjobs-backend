@@ -135,7 +135,7 @@ router.route('/gallery')
     const userId = req.user._id;
     const image = req.query.image;
 
-    var update = { $pull: { "gallery": image } }
+    var update = { $pull: { "provider.gallery": image } }
 
     User.findByIdAndUpdate({ _id: userId }, update,
       { safe: true, upsert: true, new: true }, (err, _) => {

@@ -13,6 +13,11 @@ const schema = new Schema({
     required: true
   },
   services: [{ type: Schema.Types.ObjectId, ref: 'Service' }],
+  totalPrice: {
+    type: Number,
+    default: 0,
+    required: true
+  },
   status: {
     type: Number,
     required: true,

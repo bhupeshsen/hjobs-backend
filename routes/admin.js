@@ -48,6 +48,8 @@ router.route('/token')
 
 router.get('/dashboard', isValidUser, (req, res) => {
   const role = req.user.role;
+  const today = new Date();
+  const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
   User.aggregate([
     {
@@ -124,6 +126,52 @@ router.get('/dashboard', isValidUser, (req, res) => {
       }
     },
     {
+      $lookup: {
+        from: CM.collection.name,
+        let: {},
+        pipeline: [{
+          $project: {
+            _id: 1,
+            active: { $cond: [{ $gte: ['$expiryDate', new Date()] }, 1, 0] },
+            pending: { $cond: [{ $eq: ['$approved', false] }, 1, 0] },
+            sinceWeek: { $cond: [{ $lte: ['$createdAt', lastWeek] }, 1, 0] }
+          }
+        }],
+        as: 'cms'
+      }
+    },
+    {
+      $lookup: {
+        from: BC.collection.name,
+        let: {},
+        pipeline: [{
+          $project: {
+            _id: 1,
+            active: { $cond: [{ $gte: ['$expiryDate', new Date()] }, 1, 0] },
+            pending: { $cond: [{ $eq: ['$approved', false] }, 1, 0] },
+            sinceWeek: { $cond: [{ $lte: ['$createdAt', lastWeek] }, 1, 0] }
+          }
+        }],
+        as: 'bcs'
+      }
+    },
+    {
+      $lookup: {
+        from: Advisor.collection.name,
+        let: {},
+        pipeline: [{ $project: { _id: 1 } }],
+        as: 'advisors'
+      }
+    },
+    {
+      $lookup: {
+        from: FSE.collection.name,
+        let: {},
+        pipeline: [{ $project: { _id: 1 } }],
+        as: 'fses'
+      }
+    },
+    {
       $project: {
         seeker: {
           total: { $size: '$_seeker' },
@@ -154,6 +202,24 @@ router.get('/dashboard', isValidUser, (req, res) => {
           multi: { $sum: '$jobs.multiState' }
         },
         jobBranding: '0',
+        business: {
+          cm: {
+            total: { $size: '$cms' },
+            inactive: { $subtract: [{ $size: '$cms' }, { $sum: '$cms.active' }] },
+            active: { $sum: '$cms.active' },
+            pending: { $sum: '$cms.pending' },
+            sinceWeek: { $sum: '$cms.sinceWeek' }
+          },
+          bc: {
+            total: { $size: '$bcs' },
+            inactive: { $subtract: [{ $size: '$bcs' }, { $sum: '$bcs.active' }] },
+            active: { $sum: '$bcs.active' },
+            pending: { $sum: '$bcs.pending' },
+            sinceWeek: { $sum: '$bcs.sinceWeek' }
+          },
+          advisor: { $size: '$advisors' },
+          fse: { $size: '$fses' },
+        },
         earning: { $sum: '$payments.amount' }
       }
     }

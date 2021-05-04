@@ -5,6 +5,8 @@ const crypto = require("crypto");
 const config = require('../config/config');
 const User = require('../models/user').User;
 const { Payment } = require('../models/payment');
+const { Advisor } = require('../models/business/advisor');
+const { BC } = require('../models/business/business');
 
 var instance = new Razorpay({
   key_id: config.razorpayKey,
@@ -136,7 +138,8 @@ async function subscribe(body, user, res) {
 }
 
 async function updateWallet(doc, res, payment) {
-  var amount = payment == 99 ? 5 : payment == 149 ? 6 : payment == 199 ? 7 : payment == 299 ? 8 : payment == 599 ? 8 : 0;
+  var amount = payment == 99 ? 5 : payment == 149 ? 6 : payment == 199 ? 7
+    : payment == 299 ? 8 : payment == 599 ? 8 : 0;
 
   try {
     if (doc.referredBy != null && doc.referredBy != '') {
@@ -145,8 +148,8 @@ async function updateWallet(doc, res, payment) {
     }
     if (doc.addedByCode != null && doc.addedByCode != '') {
       const code = doc.addedByCode;
-      const percent = code.substr(0, 2) == 'AD' ? 20 : 30
-      const userModel = code.substr(0, 2) == 'AD' ? BA : BC
+      const percent = code.substr(0, 2) == 'AD' ? 20 : 30;
+      const userModel = code.substr(0, 2) == 'AD' ? Advisor : BC;
       const bcAmount = Number(payment) * percent / 100;
 
       await userModel.findOneAndUpdate({ bcCode: doc.addedByCode },
