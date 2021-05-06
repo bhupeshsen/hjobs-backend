@@ -156,15 +156,15 @@ var schema = new Schema({
         type: String,
         trim: true
       },
-      locality: { type: String, trim: true },
-      district: {
-        type: String,
-        trim: true
-      },
       state: {
         type: String,
         trim: true
       },
+      city: {
+        type: String,
+        trim: true
+      },
+      locality: { type: String, trim: true },
       pinCode: {
         type: Number
       },

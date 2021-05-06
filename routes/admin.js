@@ -22,7 +22,8 @@ const router = express.Router();
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const path = 'public/images/';
+    const userType = req.params.user;
+    const path = `public/images/`;
     fs.mkdirSync(path, { recursive: true });
     cb(null, path)
   },
@@ -343,23 +344,29 @@ const fseUpload = upload.fields([
   { name: 'documents[panCard][image]', maxCount: 1 },
   { name: 'photo', maxCount: 1 }
 ]);
-router.route('/fse')
+router.route('/business/:user')
   .get(isValidUser, (req, res) => {
+    const user = req.params.user;
     const userId = req.query.id;
 
+    const model = user == 'fse' ? FSE
+      : user == 'ba' ? Advisor : user == 'bc' ? BC
+        : user == 'cm' ? CM : null;
+
     if (userId != undefined) {
-      FSE.findById({ _id: userId }).exec((err, users) => {
+      model.findById({ _id: userId }).exec((err, users) => {
         if (err) return res.status(400).json(err);
         res.status(200).json(users);
       });
     } else {
-      FSE.find().exec((err, users) => {
+      model.find().exec((err, users) => {
         if (err) return res.status(400).json(err);
         res.status(200).json(users);
       });
     }
   })
   .post(fseUpload, isValidUser, (req, res) => {
+    const user = req.params.user;
     var body = req.body;
 
     const aadharF = req.files['documents[aadharCard][aadharF]'];
@@ -384,13 +391,18 @@ router.route('/fse')
       mail.passwordMail(req, body.firstName, body.email, 'fse');
     }
 
-    const fse = new FSE(body);
-    fse.save((err) => {
+    const model = user == 'fse' ? FSE
+      : user == 'ba' ? Advisor : user == 'bc' ? BC
+        : user == 'cm' ? CM : null;
+
+    const data = new model(body);
+    data.save((err) => {
       if (err) return res.status(400).json(err);
-      res.status(200).json({ message: 'FSE successfully registered!' })
+      res.status(200).json({ message: 'Successfully registered!' })
     })
   })
   .put(isValidUser, async (req, res) => {
+    const user = req.params.user;
     const userId = req.query.id;
     const status = req.query.status;
     const state = req.body.state;
@@ -419,23 +431,34 @@ router.route('/fse')
       update = req.body;
     }
 
-    FSE.findByIdAndUpdate({ _id: userId }, update, { new: true })
+    const model = user == 'fse' ? FSE
+      : user == 'ba' ? Advisor : user == 'bc' ? BC
+        : user == 'cm' ? CM : null;
+
+    model.findByIdAndUpdate({ _id: userId }, update, { new: true })
       .exec((err, fse) => {
         if (err) return res.status(400).json(err);
 
-        // if (status == 'approve') {
-        //   const htmlMessage = mailScript.fseApprove(fse.firstName, fse.email, fse.fseCode);
-        //   mail.sendMail(doc.email, doc.firstName, 'FSE Code', '', htmlMessage);
-        // }
-        res.status(200).json({ message: 'FSE successfully updated!', data: fse });
+        if (status == 'approve') {
+          const htmlMessage = user == 'fse' ? mailScript.fseApprove(fse.firstName, fse.email, fse.fseCode)
+            : '';
+          mail.sendMail(doc.email, doc.firstName, `${user.toLocaleUpperCase()} Code`, '', htmlMessage);
+        }
+        res.status(200).json({ message: 'Successfully updated!', data: fse });
       })
   })
   .delete(isValidUser, (req, res) => {
+    const user = req.params.user;
     const userId = req.query.id;
-    FSE.findByIdAndDelete({ _id: userId })
+
+    const model = user == 'fse' ? FSE
+      : user == 'ba' ? Advisor : user == 'bc' ? BC
+        : user == 'cm' ? CM : null;
+
+    model.findByIdAndDelete({ _id: userId })
       .exec((err, _) => {
         if (err) return res.status(400).json(err);
-        res.status(200).json({ message: 'FSE successfully deleted!' });
+        res.status(200).json({ message: 'Successfully deleted!' });
       });
   });
 
