@@ -67,6 +67,7 @@ const providerRouter = require('./routes/provider');
 const dataRouter = require('./routes/data');
 const hunarRouter = require('./routes/hunar');
 const fseRouter = require('./routes/fse');
+const bcRouter = require('./routes/bc');
 
 app.use('/', indexRouter);
 app.use('/auth', authRouter);
@@ -80,6 +81,7 @@ app.use('/customer', passport.authenticate('user'), customerRouter);
 app.use('/provider', passport.authenticate('user'), providerRouter);
 app.use('/hunar', passport.authenticate('user'), hunarRouter);
 app.use('/business/fse', passport.authenticate('fse'), fseRouter);
+app.use('/business/bc', passport.authenticate('bc'), bcRouter);
 
 mongoose.set('useCreateIndex', true);
 mongoose.set('useFindAndModify', false);
