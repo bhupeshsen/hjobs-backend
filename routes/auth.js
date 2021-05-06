@@ -319,6 +319,8 @@ router.post('/business/:type/login', (req, res, next) => {
         name: user.name,
         email: user.email,
         mobile: user.mobile,
+        address: user.address,
+        photo: user.photo,
         approved: user.approved,
         disabled: user.disabled,
         createdAt: user.createdAt,
