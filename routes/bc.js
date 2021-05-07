@@ -2,6 +2,19 @@ const express = require('express');
 const { Payment } = require('../models/payment');
 const { User } = require('../models/user');
 const router = express.Router();
+const { BC, CM } = require('../models/business/business');
+
+router.route('/profile')
+  .get(isValidUser, (req, res) => {
+    const userId = req.user._id;
+    if (userId != undefined) {
+      BC.findById({ _id: userId }).exec((err, users) => {
+        if (err) return res.status(400).json(err);
+        res.status(200).json(users);
+      });
+    }
+  });
+
 
 router.route('/dashboard')
   .get(isValidUser, (req, res) => {

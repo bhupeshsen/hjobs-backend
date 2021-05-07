@@ -2,6 +2,7 @@ const express = require('express');
 const { Payment } = require('../models/payment');
 const { User } = require('../models/user');
 const router = express.Router();
+const { FSE } = require('../models/business/fse');
 
 router.route('/dashboard')
   .get(isValidUser, (req, res) => {
@@ -85,6 +86,18 @@ router.route('/dashboard')
       if (payments.length == 0) return res.status(404).json({ message: 'Fse not found!' });
       res.status(200).json(payments[0]);
     });
+  });
+
+
+router.route('/profile')
+  .get(isValidUser, (req, res) => {
+    const userId = req.user._id;
+    if (userId != undefined) {
+      FSE.findById({ _id: userId }).exec((err, users) => {
+        if (err) return res.status(400).json(err);
+        res.status(200).json(users);
+      });
+    }
   });
 
 router.get('/users', isValidUser, (req, res) => {
