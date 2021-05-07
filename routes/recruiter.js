@@ -3,6 +3,7 @@ const multer = require('multer');
 const ObjectId = require('mongodb').ObjectID;
 const path = require('path');
 const config = require('../config/config');
+const fs = require('fs');
 const { Company } = require('../models/company');
 const { User } = require('../models/user');
 const { Job } = require('../models/job');
@@ -13,7 +14,9 @@ const router = express.Router();
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'public/images/company');
+   const path = 'public/images/company';
+    fs.mkdirSync(path, { recursive: true });
+    cb(null, path);
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + path.extname(file.originalname));
