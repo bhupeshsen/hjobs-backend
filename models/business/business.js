@@ -46,7 +46,7 @@ var schema = new Schema({
     }
   },
   knownLanguages: Array,
-  qualification: {
+  qualificationId: {
     type: String,
     required: true,
   },
@@ -71,9 +71,9 @@ var schema = new Schema({
       type: String,
       trim: true
     },
-    state: String,
-    district: String,
-    city: String,
+    stateId: String,
+    districtId: String,
+    cityId: String,
     pinCode: { type: Number },
     phone: {
       type: String,
@@ -103,32 +103,27 @@ var schema = new Schema({
       message: props => `${props.value} is not a valid mobile number!`
     },
   },
-  documents: {
-    aadharCard: {
-      number: { type: Number },
-      aadharF: { type: String },
-      aadharB: { type: String }
+  aadharCard: {
+    number: { type: Number },
+    aadharF: { type: String },
+    aadharB: { type: String }
+  },
+  panCard: {
+    number: {
+      type: String,
+      uppercase: true,
+      validate: {
+        validator: function (v) {
+          return /^[A-Z]{3}[P][A-Z]{1}[0-9]{4}[A-Z]{1}$/.test(v);
+        },
+        message: props => `${props.value} is not a valid pan number!`
+      }
     },
-    panCard: {
-      number: {
-        type: String,
-        uppercase: true,
-        validate: {
-          validator: function (v) {
-            return /^[A-Z]{3}[P][A-Z]{1}[0-9]{4}[A-Z]{1}$/.test(v);
-          },
-          message: props => `${props.value} is not a valid pan number!`
-        }
-      },
-      image: { type: String }
-    },
-    residentialProof: {
-      proofType: String,
-      proofImage: String
-    },
-    bank: {
-      passbook: String
-    }
+    panCardUrl: { type: String }
+  },
+  residentialProof: {
+    proofType: String,
+    proofImage: String
   },
   currentStatus: {
     type: String,
@@ -254,7 +249,8 @@ var schema = new Schema({
     bankHolderName: { type: String },
     bankBranch: { type: String },
     ifscCode: { type: String, uppercase: true },
-    name: { type: String }
+    bankId: { type: String },
+    bankPassbookUrl: { type: String },
   },
   fcmToken: { type: String, default: null },
   disabled: { type: Boolean, default: false },

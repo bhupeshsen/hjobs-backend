@@ -6,7 +6,7 @@ const { FSE } = require('../models/business/fse');
 
 router.route('/dashboard')
   .get(isValidUser, (req, res) => {
-    const code = req.user.role == 'admin' ? req.query.code : req.user.fseCode;
+    const code = req.user.fseCode;
     const date = new Date();
     const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
     const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
@@ -88,6 +88,7 @@ router.route('/dashboard')
     });
   });
 
+
 router.route('/profile')
   .get(isValidUser, (req, res) => {
     const userId = req.user._id;
@@ -98,6 +99,7 @@ router.route('/profile')
       });
     }
   });
+
 router.get('/users', isValidUser, (req, res) => {
   const code = req.user.fseCode;
   const user = req.query.user;

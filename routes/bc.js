@@ -15,6 +15,7 @@ router.route('/profile')
     }
   });
 
+
 router.route('/dashboard')
   .get(isValidUser, (req, res) => {
     const code = req.user.bcCode;
@@ -119,7 +120,6 @@ router.get('/users', isValidUser, (req, res) => {
     res.status(200).json(users);
   });
 });
-
 function isValidUser(req, res, next) {
   if (req.isAuthenticated()) next();
   else return res.status(401).json({ message: 'Unauthorized' });
