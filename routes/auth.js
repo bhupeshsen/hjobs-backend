@@ -18,7 +18,6 @@ const { BC, CM } = require('../models/business/business');
 
 // PRIVATE and PUBLIC key
 var privateKEY = fs.readFileSync(__dirname + '/../config/jwt.key', 'utf8');
-
 const issuer = 'admin.hindustaanjobs.com';        // Issuer
 const audience = 'hindustaanjobs.com';            // Audience
 
@@ -319,13 +318,6 @@ router.post('/business/:type/login', (req, res, next) => {
         name: user.name,
         email: user.email,
         mobile: user.mobile,
-        address: user.address,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        photo: user.photo,
-        code:code,
-        documents:user.documents,
-        userType:user.userType,
         approved: user.approved,
         disabled: user.disabled,
         createdAt: user.createdAt,

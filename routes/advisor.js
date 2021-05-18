@@ -14,10 +14,9 @@ router.route('/profile')
       });
     }
   });
-
 router.route('/dashboard')
   .get(isValidUser, (req, res) => {
-    const code = req.user.baCode;
+    const code = req.user.role == 'admin' ? req.query.code : req.user.baCode;
     const date = new Date();
     const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
     const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
