@@ -81,11 +81,9 @@ app.use('/seeker', passport.authenticate('user'), seekerRouter);
 app.use('/customer', passport.authenticate('user'), customerRouter);
 app.use('/provider', passport.authenticate('user'), providerRouter);
 app.use('/hunar', passport.authenticate('user'), hunarRouter);
-app.use('/business/fse', passport.authenticate(['admin', 'fse']), fseRouter);
-app.use('/business/advisor', passport.authenticate(['admin', 'ba']), advisorRouter);
-app.use('/business/bc', passport.authenticate(['admin', 'bc']), bcRouter);
-app.use('/business/cm', passport.authenticate(['admin', 'cm']), cmRouter);
-
+app.use('/business/fse', passport.authenticate('fse'), fseRouter);
+app.use('/business/bc', passport.authenticate('bc'), bcRouter);
+app.use('/business/ba', passport.authenticate('ba'), baRouter);
 
 mongoose.set('useCreateIndex', true);
 mongoose.set('useFindAndModify', false);
