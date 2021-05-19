@@ -18,6 +18,7 @@ const { BC, CM } = require('../models/business/business');
 
 // PRIVATE and PUBLIC key
 var privateKEY = fs.readFileSync(__dirname + '/../config/jwt.key', 'utf8');
+
 const issuer = 'admin.hindustaanjobs.com';        // Issuer
 const audience = 'hindustaanjobs.com';            // Audience
 
@@ -59,12 +60,12 @@ router.post('/reset-password', (req, res) => {
       email,
       doc.name,
       'Request for reset password',
-      `Dear ${doc.name},On your request, we have sent the login credentials of your account as mentioned below. 
-      Your Login Details 
-      User Email: ${email} 
-      Please click on the below link to reset your password- 
-      ${req.protocol}://${req.get('host')}/reset-password/${user}/${token} 
-      Regards, Joogle Team 
+      `Dear ${doc.name},On your request, we have sent the login credentials of your account as mentioned below.
+      Your Login Details
+      User Email: ${email}
+      Please click on the below link to reset your password-
+      ${req.protocol}://${req.get('host')}/reset-password/${user}/${token}
+      Regards, Joogle Team
       This is An Auto Generated Notification Email. Please Do Not Respond To This.`,
       `Dear <b>${doc.name}</b>,<br>On your request, we have sent the login credentials of your account as mentioned below.
       <br><b>Your Login Details</b><br><br><br>
@@ -158,15 +159,9 @@ router.post('/login', (req, res, next) => {
         name: user.name,
         email: user.email,
         mobile: user.mobile,
-        address: user.address,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        photo: user.photo,
-        code: code,
-        documents: user.documents,
-        userType: user.userType,
+        referralCode: user.referralCode,
         approved: user.approved,
-        disabled: user.disabled,
+        verified: user.verified,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
       }
@@ -324,6 +319,13 @@ router.post('/business/:type/login', (req, res, next) => {
         name: user.name,
         email: user.email,
         mobile: user.mobile,
+        address: user.address,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        photo: user.photo,
+        code:code,
+        documents:user.documents,
+        userType:user.userType,
         approved: user.approved,
         disabled: user.disabled,
         createdAt: user.createdAt,
