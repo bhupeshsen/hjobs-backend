@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path')
+const jwt = require('jsonwebtoken');
 const ObjectId = require('mongodb').ObjectID;
 const config = require('../config/config');
 const mailScript = require('../helper/mail-script');
@@ -19,6 +20,11 @@ const Plan = require('../models/plan');
 const mail = require('../helper/mail');
 const states = require('../helper/states');
 const router = express.Router();
+
+// PRIVATE and PUBLIC key
+const privateKEY = fs.readFileSync(__dirname + '/../config/jwt.key', 'utf8');
+const issuer = 'admin.hindustaanjobs.com';        // Issuer
+const audience = 'hindustaanjobs.com';            // Audience
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -283,7 +289,45 @@ router.route('/user')
         res.status(200).json(users);
       })
   })
-  .put(isValidUser, (req, res) => { })
+  .post(isValidUser, upload.single('photo'), (req, res) => {
+    var body = req.body;
+
+    if (req.file != undefined) {
+      body.photo = config.pathImages + req.file.filename;
+    }
+
+    const JWTToken = jwt.sign({
+      name: body.name,
+      email: body.email,
+      addedByCode: body.addedByCode
+    }, privateKEY, {
+      issuer: issuer, audience: audience,
+      algorithm: 'RS256', expiresIn: '24h'
+    });
+
+    const today = new Date()
+    const tomorrow = new Date(today)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+
+    body.referralCode = generateReferralCode()
+    body.passwordResetToken = JWTToken;
+    body.passwordResetExpires = tomorrow;
+
+    const user = new User(body);
+    user.save((err) => {
+      if (err) return res.status(400).json(err);
+      res.status(200).json({ message: 'User successfully registered.' })
+    });
+  })
+  .put(isValidUser, (req, res) => {
+    const id = req.query.id;
+    const body = req.body;
+
+    User.findByIdAndUpdate({ _id: id }, body, { new: true }, (err, doc) => {
+      if (err) return res.status(400).json({ message: 'Bad Request', error: err });
+      res.status(200).json({ message: 'Profile successfully updated!', user: doc });
+    });
+  })
   .delete(isValidUser, (req, res) => {
     const userId = req.query.id;
     User.findByIdAndDelete({ _id: userId })
@@ -337,11 +381,14 @@ router.put('/video', isValidUser, (req, res) => {
     });
 });
 
-/// FSE
-const fseUpload = upload.fields([
+/// Business Partner
+/// user => cm, bc, ba, fse
+const businessUpload = upload.fields([
   { name: 'documents[aadharCard][aadharF]', maxCount: 1 },
   { name: 'documents[aadharCard][aadharB]', maxCount: 1 },
   { name: 'documents[panCard][image]', maxCount: 1 },
+  { name: 'documents[residentialProof][proofImage]', maxCount: 1 },
+  { name: 'documents[bank][passbook]', maxCount: 1 },
   { name: 'photo', maxCount: 1 }
 ]);
 router.route('/business/:user')
@@ -365,30 +412,45 @@ router.route('/business/:user')
       });
     }
   })
-  .post(fseUpload, isValidUser, (req, res) => {
+  .post(isValidUser, businessUpload, (req, res) => {
     const user = req.params.user;
     var body = req.body;
 
     const aadharF = req.files['documents[aadharCard][aadharF]'];
     const aadharB = req.files['documents[aadharCard][aadharB]'];
     const panCard = req.files['documents[panCard][image]'];
+    const residential = req.files['documents[residentialProof][proofImage]'];
+    const bank = req.files['documents[bank][passbook]'];
     const photo = req.files['photo'];
 
     if (aadharF != undefined && aadharB != undefined) {
+      body.documents.aadharCard = {};
       body.documents.aadharCard.aadharF = config.pathImages + aadharF[0].filename;
       body.documents.aadharCard.aadharB = config.pathImages + aadharB[0].filename;
     }
 
     if (panCard != undefined) {
-      body.documents.panCard.image = config.pathImages + panCard[0].filename
+      body.documents.panCard = {};
+      body.documents.panCard.image = config.pathImages + panCard[0].filename;
+    }
+
+    if (residential != undefined) {
+      body.documents.residentialProof = {};
+      body.documents.residentialProof.proofImage = config.pathImages + residential[0].filename;
+    }
+
+    if (bank != undefined) {
+      body.documents.bank = {};
+      body.documents.bank.passbook = config.pathImages + bank[0].filename;
     }
 
     if (photo != undefined) {
       body.photo = config.pathImages + photo[0].filename
     }
 
+    const name = user == 'bc' ? body.name : body.firstName;
     if (body.password == undefined || body.password == '') {
-      mail.passwordMail(req, body.firstName, body.email, 'fse');
+      mail.passwordMail(req, name, body.email, user);
     }
 
     const model = user == 'fse' ? FSE
@@ -401,13 +463,44 @@ router.route('/business/:user')
       res.status(200).json({ message: 'Successfully registered!' })
     })
   })
-  .put(isValidUser, async (req, res) => {
+  .put(isValidUser, businessUpload, async (req, res) => {
     const user = req.params.user;
     const userId = req.query.id;
     const status = req.query.status;
-    const state = req.body.state;
 
     var update = {};
+
+    const aadharF = req.files['documents[aadharCard][aadharF]'];
+    const aadharB = req.files['documents[aadharCard][aadharB]'];
+    const panCard = req.files['documents[panCard][image]'];
+    const residential = req.files['documents[residentialProof][proofImage]'];
+    const bank = req.files['documents[bank][passbook]'];
+    const photo = req.files['photo'];
+
+    if (aadharF != undefined && aadharB != undefined) {
+      update.documents.aadharCard = {};
+      update.documents.aadharCard.aadharF = config.pathImages + aadharF[0].filename;
+      update.documents.aadharCard.aadharB = config.pathImages + aadharB[0].filename;
+    }
+
+    if (panCard != undefined) {
+      update.documents.panCard = {};
+      update.documents.panCard.image = config.pathImages + panCard[0].filename;
+    }
+
+    if (residential != undefined) {
+      update.documents.residentialProof = {};
+      update.documents.residentialProof.proofImage = config.pathImages + residential[0].filename;
+    }
+
+    if (bank != undefined) {
+      update.documents.bank = {};
+      update.documents.bank.passbook = config.pathImages + bank[0].filename;
+    }
+
+    if (photo != undefined) {
+      update.photo = config.pathImages + photo[0].filename
+    }
 
     const currentDate = new Date();
     const year = currentDate.getFullYear();
@@ -415,18 +508,20 @@ router.route('/business/:user')
     const day = currentDate.getDate();
     const nextDate = new Date(year + 5, month, day);
 
-    const stateCode = states.getStateCodeByStateName(state);
-    const code = await generatedCode('fse');
-
     if (status == 'approve') {
+      const state = req.body.state;
+      const stateCode = states.getStateCodeByStateName(state);
+      const code = await generatedCode('fse');
+
       update = {
         approved: true,
         updatedAt: currentDate,
         approvedDate: currentDate,
         expiryDate: nextDate,
-        fseCode: `FSE${stateCode}${code}`,
         code: parseInt(code)
       }
+      const codeType = user == 'fse' ? 'FSE' : user == 'ba' ? 'AD' : user == 'bc' ? 'BC' : null;
+      update[`${user}Code`] = `${codeType}${stateCode}${code}`;
     } else {
       update = req.body;
     }
@@ -442,7 +537,8 @@ router.route('/business/:user')
         if (status == 'approve') {
           const htmlMessage = user == 'fse' ? mailScript.fseApprove(fse.firstName, fse.email, fse.fseCode)
             : '';
-          mail.sendMail(doc.email, doc.firstName, `${user.toLocaleUpperCase()} Code`, '', htmlMessage);
+          const name = user == 'fse' ? doc.firstName : doc.name;
+          mail.sendMail(doc.email, name, `${user.toLocaleUpperCase()} Code`, '', htmlMessage);
         }
         res.status(200).json({ message: 'Successfully updated!', data: fse });
       })
@@ -461,6 +557,9 @@ router.route('/business/:user')
         res.status(200).json({ message: 'Successfully deleted!' });
       });
   });
+
+/// Business Dashboard
+// router.get('/business/dashboard');
 
 /// Blogs
 router.route('/blog')
@@ -504,6 +603,17 @@ const generatedCode = async (type) => {
   var _code = bc.code == undefined ? 0 : bc.code;
   var len = 5 - ('' + parseInt(_code) + 1).length;
   var code = (len > 0 ? new Array(++len).join('0') : '') + (parseInt(_code) + 1);
+  return code;
+};
+
+function generateReferralCode() {
+  const alpha = 'abcdefghijklmnopqrstuvwxyz0123456789'
+  var code = '';
+
+  for (var i = 0; i < 6; i++) {
+    code += alpha.charAt(Math.floor(Math.random() * alpha.length))
+  }
+  code = `${code.toUpperCase()}`
   return code;
 };
 

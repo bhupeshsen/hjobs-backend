@@ -20,7 +20,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 app.use(_cors({
-  origin: ['http://localhost:4200','https://jobadmindashbord.web.app', 'http://192.168.1.11:4200','http://192.168.43.56:4200','https://job-admin-1b462.web.app','http://192.168.29.166:4200'],
+  origin: ['http://localhost:4200', 'http://192.168.1.11:4200', 'http://192.168.29.166:4200'],
   // origin: ['http://www.hindustaanjobs.com', 'http://hindustaanjobs.com', 'http://jooglekar.com', 'http://www.jooglekar.com'],
   credentials: true
 }));
@@ -67,8 +67,9 @@ const providerRouter = require('./routes/provider');
 const dataRouter = require('./routes/data');
 const hunarRouter = require('./routes/hunar');
 const fseRouter = require('./routes/fse');
+const advisorRouter = require('./routes/advisor');
 const bcRouter = require('./routes/bc');
-const baRouter = require('./routes/advisor');
+const cmRouter = require('./routes/cm');
 
 app.use('/', indexRouter);
 app.use('/auth', authRouter);
@@ -81,9 +82,10 @@ app.use('/seeker', passport.authenticate('user'), seekerRouter);
 app.use('/customer', passport.authenticate('user'), customerRouter);
 app.use('/provider', passport.authenticate('user'), providerRouter);
 app.use('/hunar', passport.authenticate('user'), hunarRouter);
-app.use('/business/fse', passport.authenticate('fse'), fseRouter);
-app.use('/business/bc', passport.authenticate('bc'), bcRouter);
-app.use('/business/ba', passport.authenticate('ba'), baRouter);
+app.use('/business/fse', passport.authenticate(['admin', 'fse']), fseRouter);
+app.use('/business/advisor', passport.authenticate(['admin', 'ba']), advisorRouter);
+app.use('/business/bc', passport.authenticate(['admin', 'bc']), bcRouter);
+app.use('/business/cm', passport.authenticate(['admin', 'cm']), cmRouter);
 
 mongoose.set('useCreateIndex', true);
 mongoose.set('useFindAndModify', false);

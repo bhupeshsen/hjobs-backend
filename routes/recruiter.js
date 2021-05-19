@@ -3,7 +3,6 @@ const multer = require('multer');
 const ObjectId = require('mongodb').ObjectID;
 const path = require('path');
 const config = require('../config/config');
-const fs = require('fs');
 const { Company } = require('../models/company');
 const { User } = require('../models/user');
 const { Job } = require('../models/job');
@@ -14,7 +13,7 @@ const router = express.Router();
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-   const path = 'public/images/company';
+    const path = 'public/images/company';
     fs.mkdirSync(path, { recursive: true });
     cb(null, path);
   },
@@ -221,7 +220,7 @@ router.get('/view-profile/:userId', isValidUser, (req, res) => {
   } else {
     const filter = {
       name: 1, email: 1, mobile: 1, photo: 1,
-      documents: 1, educations: 1, seeker: 1,knownLanguages: 1,address: 1
+      documents: 1, educations: 1, seeker: 1, knownLanguages: 1, address: 1
     };
 
     User.findById({ _id: userId }, filter).exec((err, user) => {
