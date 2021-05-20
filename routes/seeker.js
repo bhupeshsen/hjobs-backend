@@ -192,7 +192,7 @@ router.get('/job', isValidUser, (req, res) => {
     .sort({ createdAt: -1 })
     .exec((err, jobs) => {
       if (err) return res.status(400).json(err);
-      jobs.appliedBy = jobs.appliedBy > 0 ? jobs.appliedBy.filter(m => m.user != null) : [];
+      jobs.appliedBy = jobs.appliedBy.length > 0 ? jobs.appliedBy.filter(m => m.user != null) : [];
       res.status(200).json(jobs);
     });
 });
