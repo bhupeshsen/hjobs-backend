@@ -418,13 +418,16 @@ router.get('/local-hunar-videos', (req, res) => {
   })
 });
 
+
+
 router.get('/top-companies', (req, res) => {
-  res.status(200).json([{
-    name: 'Snow Corporate',
-    logo: `/images/company/snow-corp.png`,
-    address: 'Sec-34, Rohini, North Delhi, Pin- 110039'
-  }]);
+  Company.find(  { },
+    { name: 1, logo: 1,about:1 },(err, results) => {
+    if (err) return res.status(400).json(err);
+    return res.status(200).json(results);
+  });
 });
+
 
 /// Search Job
 router.get('/search-jobs', (req, res) => {

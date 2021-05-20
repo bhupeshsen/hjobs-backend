@@ -19,8 +19,8 @@ const { BC, CM } = require('../models/business/business');
 // PRIVATE and PUBLIC key
 var privateKEY = fs.readFileSync(__dirname + '/../config/jwt.key', 'utf8');
 
-const issuer = 'admin.hindustaanjobs.com';       // Issuer
-const audience = 'hindustaanjobs.com';           // Audience
+const issuer = 'admin.hindustaanjobs.com';        // Issuer
+const audience = 'hindustaanjobs.com';            // Audience
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
