@@ -395,7 +395,7 @@ router.get('/faq', (req, res) => {
 
 /// Local Hunar Videos
 router.get('/local-hunar-videos', (req, res) => {
-  Job.aggregate([
+  User.aggregate([
     { $match: { 'hunar.videos.status': 1 } },
     { $unwind: { path: '$hunar.videos', preserveNullAndEmptyArrays: true } },
     { $group: { _id: null, videos: { $addToSet: '$hunar.videos' } } },
