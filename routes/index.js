@@ -419,6 +419,12 @@ router.get('/local-hunar-videos', (req, res) => {
 });
 
 
+router.get('/top-associate', (req, res) => {
+  Company.find((err, results) => {
+    if (err) return res.status(400).json(err);
+    return res.status(200).json(results);
+  });
+});
 
 router.get('/top-companies', (req, res) => {
   Company.find(  { },

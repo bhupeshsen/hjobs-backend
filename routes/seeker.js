@@ -178,12 +178,14 @@ router.get('/job', isValidUser, (req, res) => {
   const jobId = req.query.jobId;
   const skills = req.query.skills;
 
+
   const query = jobId == undefined
     ? companyId != undefined
       ? { postedBy: companyId, skills: { $regex: '.*' + skills + '.*', $options: 'i' } } : {}
     : { _id: jobId };
-  const filter = { hiredCandidates: 0, shortLists: 0 };
-  const model = jobId == undefined ? Job.find(query, filter) : Job.findById(query, filter);
+  const filter = { hiredCandidates: 0, shortLists: 0, appliedBy: 0 };
+  const filter1 = { hiredCandidates: 0, shortLists: 0 };
+  const model = jobId == undefined ? Job.find(query, filter) : Job.findById(query, filter1);
   const filter2 = jobId == undefined ? 'name logo' : 'name logo about perks gallery';
 
   model
@@ -192,7 +194,9 @@ router.get('/job', isValidUser, (req, res) => {
     .sort({ createdAt: -1 })
     .exec((err, jobs) => {
       if (err) return res.status(400).json(err);
-      jobs.appliedBy = jobs.appliedBy.length > 0 ? jobs.appliedBy.filter(m => m.user != null) : [];
+      if (jobId != undefined) {
+        jobs.appliedBy = jobs.appliedBy.length > 0 ? jobs.appliedBy.filter(m => m.user != null) : [];
+      }
       res.status(200).json(jobs);
     });
 });
