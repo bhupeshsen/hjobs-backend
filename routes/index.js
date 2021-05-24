@@ -227,109 +227,117 @@ router.get('/plans', (_, res) => {
   Plan.aggregate([
     {
       $facet: {
-        user: [{ $match: { userType: 'user' } }, {
-          $addFields: {
-            finalPrice: {
-              $cond: {
-                if: {
-                  $eq: ['$discountPrice', 0]
-                },
-                then: '$originalPrice',
-                else: "$discountPrice"
+        user: [
+          { $match: { userType: 'user' } }, {
+            $addFields: {
+              finalPrice: {
+                $cond: {
+                  if: {
+                    $eq: ['$discountPrice', 0]
+                  },
+                  then: '$originalPrice',
+                  else: "$discountPrice"
+                }
               }
             }
-          }
-        },
-        { $sort: { finalPrice: 1 } }],
-        company: [{ $match: { userType: 'company' } }, {
-          $addFields: {
-            finalPrice: {
-              $cond: {
-                if: {
-                  $eq: ['$discountPrice', 0]
-                },
-                then: '$originalPrice',
-                else: "$discountPrice"
+          },
+          { $sort: { finalPrice: 1 } }
+        ],
+        recruiter: [
+          { $match: { userType: 'recruiter' } }, {
+            $addFields: {
+              finalPrice: {
+                $cond: {
+                  if: {
+                    $eq: ['$discountPrice', 0]
+                  },
+                  then: '$originalPrice',
+                  else: "$discountPrice"
+                }
               }
             }
-          }
-        },
-        { $sort: { finalPrice: 1 } }],
-        resume: [{ $match: { userType: 'resume' } }, {
-          $addFields: {
-            finalPrice: {
-              $cond: {
-                if: {
-                  $eq: ['$discountPrice', 0]
-                },
-                then: '$originalPrice',
-                else: "$discountPrice"
+          },
+          { $sort: { finalPrice: 1 } }
+        ],
+        resume: [
+          { $match: { userType: 'resume' } }, {
+            $addFields: {
+              finalPrice: {
+                $cond: {
+                  if: {
+                    $eq: ['$discountPrice', 0]
+                  },
+                  then: '$originalPrice',
+                  else: "$discountPrice"
+                }
               }
             }
-          }
-        },
-        { $sort: { finalPrice: 1 } }],
-        jobBranding: [{ $match: { userType: 'jobBranding' } }, {
-          $addFields: {
-            finalPrice: {
-              $cond: {
-                if: {
-                  $eq: ['$discountPrice', 0]
-                },
-                then: '$originalPrice',
-                else: "$discountPrice"
+          },
+          { $sort: { finalPrice: 1 } }
+        ],
+        jobBranding: [
+          { $match: { userType: 'jobBranding' } }, {
+            $addFields: {
+              finalPrice: {
+                $cond: {
+                  if: {
+                    $eq: ['$discountPrice', 0]
+                  },
+                  then: '$originalPrice',
+                  else: "$discountPrice"
+                }
               }
             }
-          }
-        },
-        { $sort: { finalPrice: 1 } }],
-        provider: [{ $match: { userType: 'provider' } }, {
-          $addFields: {
-            finalPrice: {
-              $cond: {
-                if: {
-                  $eq: ['$discountPrice', 0]
-                },
-                then: '$originalPrice',
-                else: "$discountPrice"
-              }
-            }
-          }
-        },
-        { $sort: { finalPrice: 1 } }],
-        customer: [{ $match: { userType: 'customer' } }, {
-          $addFields: {
-            finalPrice: {
-              $cond: {
-                if: {
-                  $eq: ['$discountPrice', 0]
-                },
-                then: '$originalPrice',
-                else: "$discountPrice"
-              }
-            }
-          }
-        },
-        { $sort: { finalPrice: 1 } }],
-        hunar: [{ $match: { userType: 'hunar' } }, {
-          $addFields: {
-            finalPrice: {
-              $cond: {
-                if: {
-                  $eq: ['$discountPrice', 0]
-                },
-                then: '$originalPrice',
-                else: "$discountPrice"
-              }
-            }
-          }
-        },
-        { $sort: { finalPrice: 1 } }],
+          },
+          { $sort: { finalPrice: 1 } }
+        ],
+        // provider: [{ $match: { userType: 'provider' } }, {
+        //   $addFields: {
+        //     finalPrice: {
+        //       $cond: {
+        //         if: {
+        //           $eq: ['$discountPrice', 0]
+        //         },
+        //         then: '$originalPrice',
+        //         else: "$discountPrice"
+        //       }
+        //     }
+        //   }
+        // },
+        // { $sort: { finalPrice: 1 } }],
+        // customer: [{ $match: { userType: 'customer' } }, {
+        //   $addFields: {
+        //     finalPrice: {
+        //       $cond: {
+        //         if: {
+        //           $eq: ['$discountPrice', 0]
+        //         },
+        //         then: '$originalPrice',
+        //         else: "$discountPrice"
+        //       }
+        //     }
+        //   }
+        // },
+        // { $sort: { finalPrice: 1 } }],
+        // hunar: [{ $match: { userType: 'hunar' } }, {
+        //   $addFields: {
+        //     finalPrice: {
+        //       $cond: {
+        //         if: {
+        //           $eq: ['$discountPrice', 0]
+        //         },
+        //         then: '$originalPrice',
+        //         else: "$discountPrice"
+        //       }
+        //     }
+        //   }
+        // },
+        // { $sort: { finalPrice: 1 } }],
       }
     },
   ], (err, doc) => {
     if (err) return res.status(400).json(err);
-    res.status(200).json(doc);
+    res.status(200).json(doc[0]);
   });
 });
 
@@ -418,7 +426,6 @@ router.get('/local-hunar-videos', (req, res) => {
   })
 });
 
-
 router.get('/top-associate', (req, res) => {
   Company.find((err, results) => {
     if (err) return res.status(400).json(err);
@@ -427,11 +434,11 @@ router.get('/top-associate', (req, res) => {
 });
 
 router.get('/top-companies', (req, res) => {
-  Company.find(  { },
-    { name: 1, logo: 1,about:1 },(err, results) => {
-    if (err) return res.status(400).json(err);
-    return res.status(200).json(results);
-  });
+  Company.find({},
+    { name: 1, logo: 1, about: 1 }, (err, results) => {
+      if (err) return res.status(400).json(err);
+      return res.status(200).json(results);
+    });
 });
 
 

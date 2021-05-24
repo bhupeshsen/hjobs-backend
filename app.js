@@ -20,7 +20,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 app.use(_cors({
-  origin: ['http://localhost','http://localhost:4200','http://192.168.43.56', 'https://jobadmindashbord.web.app','https://job-admin-1b462.web.app','http://192.168.1.11:4200', 'http://192.168.29.166:4200'],
+  origin: ['http://localhost', 'http://localhost:4200', 'http://192.168.43.56', 'https://jobadmindashbord.web.app', 'https://job-admin-1b462.web.app', 'http://192.168.1.11:4200', 'http://192.168.29.166:4200'],
   // origin: ['http://www.hindustaanjobs.com', 'http://hindustaanjobs.com', 'http://jooglekar.com', 'http://www.jooglekar.com'],
   credentials: true
 }));
@@ -76,12 +76,12 @@ app.use('/auth', authRouter);
 app.use('/data', dataRouter);
 app.use('/admin', passport.authenticate('admin', { session: false }), adminRouter)
 app.use('/payment', passport.authenticate('user', { session: false }), paymentRouter);
-app.use('/user', passport.authenticate('user'), userRouter);
-app.use('/recruiter', passport.authenticate('user'), recruiterRouter);
-app.use('/seeker', passport.authenticate('user'), seekerRouter);
-app.use('/customer', passport.authenticate('user'), customerRouter);
-app.use('/provider', passport.authenticate('user'), providerRouter);
-app.use('/hunar', passport.authenticate('user'), hunarRouter);
+app.use('/user', passport.authenticate(['admin', 'user']), userRouter);
+app.use('/recruiter', passport.authenticate(['admin', 'user']), recruiterRouter);
+app.use('/seeker', passport.authenticate(['admin', 'user']), seekerRouter);
+app.use('/customer', passport.authenticate(['admin', 'user']), customerRouter);
+app.use('/provider', passport.authenticate(['admin', 'user']), providerRouter);
+app.use('/hunar', passport.authenticate(['admin', 'user']), hunarRouter);
 app.use('/business/fse', passport.authenticate(['admin', 'fse']), fseRouter);
 app.use('/business/advisor', passport.authenticate(['admin', 'ba']), advisorRouter);
 app.use('/business/bc', passport.authenticate(['admin', 'bc']), bcRouter);

@@ -21,7 +21,7 @@ const storageV = multer.diskStorage({
 let vidUpload = multer({ storage: storageV });
 
 router.post('/video', vidUpload.single('video'), isValidUser, (req, res) => {
-  const localHunarId = req.user._id;
+  const localHunarId = req.user.role == 'admin' ? req.query.id : req.user._id;
 
   var video = {};
 
@@ -37,7 +37,7 @@ router.post('/video', vidUpload.single('video'), isValidUser, (req, res) => {
   User.findByIdAndUpdate({ _id: localHunarId },
     update, { upsert: true, new: true }, (err, doc) => {
       if (err) return res.status(400).json(err);
-      res.status(200).json({ message: 'Video successfully uploaded!' });
+      res.status(200).json({ message: 'Video successfully uploaded!', user: doc });
     });
 });
 
