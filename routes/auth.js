@@ -18,6 +18,7 @@ const { BC, CM } = require('../models/business/business');
 
 // PRIVATE and PUBLIC key
 var privateKEY = fs.readFileSync(__dirname + '/../config/jwt.key', 'utf8');
+
 const issuer = 'admin.hindustaanjobs.com';        // Issuer
 const audience = 'hindustaanjobs.com';            // Audience
 
@@ -158,15 +159,9 @@ router.post('/login', (req, res, next) => {
         name: user.name,
         email: user.email,
         mobile: user.mobile,
-        address: user.address,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        photo: user.photo,
-        code: code,
-        documents: user.documents,
-        userType: user.userType,
+        referralCode: user.referralCode,
         approved: user.approved,
-        disabled: user.disabled,
+        verified: user.verified,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
       }
@@ -324,6 +319,13 @@ router.post('/business/:type/login', (req, res, next) => {
         name: user.name,
         email: user.email,
         mobile: user.mobile,
+        address: user.address,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        photo: user.photo,
+        code:code,
+        documents:user.documents,
+        userType:user.userType,
         approved: user.approved,
         disabled: user.disabled,
         createdAt: user.createdAt,
@@ -340,12 +342,13 @@ router.post('/business/:type/login', (req, res, next) => {
 
 /// BC - Register
 var bcUpload = upload.fields([
-  { name: 'documents[aadharCard][aadharF]', maxCount: 1 },
-  { name: 'documents[aadharCard][aadharB]', maxCount: 1 },
-  { name: 'documents[panCard][image]', maxCount: 1 },
-  { name: 'documents[residentialProof][proofImage]', maxCount: 1 },
-  { name: 'documents[bank][passbook]', maxCount: 1 },
-  { name: 'photo', maxCount: 1 }
+  { name: 'photo', maxCount: 1 },
+  { name: 'aadharCard[aadharF]', maxCount: 1 },
+  { name: 'aadharCard[aadharB]', maxCount: 1 },
+  { name: 'panCard[panCardUrl]', maxCount: 1 },
+  { name: 'identityProof[identityImage]', maxCount: 1 },
+  { name: 'residentialProof[proofImage]', maxCount: 1 },
+  { name: 'bank[bankPassbookUrl]', maxCount: 1 }
 ]);
 router.post('/business/bc/register', bcUpload, (req, res) => {
   var body = req.body;
@@ -355,36 +358,32 @@ router.post('/business/bc/register', bcUpload, (req, res) => {
     body.addedByCode = null;
   }
 
-  const aadharF = req.files['documents[aadharCard][aadharF]'];
-  const aadharB = req.files['documents[aadharCard][aadharB]'];
-  const panCard = req.files['documents[panCard][image]'];
-  const residential = req.files['documents[residentialProof][proofImage]'];
-  const bank = req.files['documents[bank][passbook]'];
-  const photo = req.files['photo'];
-
-  if (aadharF != undefined && aadharB != undefined) {
-    body.documents.aadharCard = {};
-    body.documents.aadharCard.aadharF = config.pathImages + aadharF[0].filename;
-    body.documents.aadharCard.aadharB = config.pathImages + aadharB[0].filename;
-  }
-
-  if (panCard != undefined) {
-    body.documents.panCard = {};
-    body.documents.panCard.image = config.pathImages + panCard[0].filename;
-  }
-
-  if (residential != undefined) {
-    body.documents.residentialProof = {};
-    body.documents.residentialProof.proofImage = config.pathImages + residential[0].filename;
-  }
-
-  if (bank != undefined) {
-    body.documents.bank = {};
-    body.documents.bank.passbook = config.pathImages + bank[0].filename;
-  }
+  var photo = req.files['photo'];
+  var aadharF = req.files['aadharCard[aadharF]'];
+  var aadharB = req.files['aadharCard[aadharB]'];
+  var panCard = req.files['panCard[panCardUrl]'];
+  var identityProof = req.files['identityProof[identityImage]'];
+  var residentialProof = req.files['residentialProof[proofImage]'];
+  var bankPassbook = req.files['bank[bankPassbookUrl]'];
 
   if (photo != undefined) {
     body.photo = config.pathImages + photo[0].filename
+  }
+  if (aadharF != undefined && aadharB != undefined) {
+    body.aadharCard.aadharF = config.pathImages + aadharF[0].filename;
+    body.aadharCard.aadharB = config.pathImages + aadharB[0].filename;
+  }
+  if (panCard != undefined) {
+    body.panCard.panCardUrl = config.pathImages + panCard[0].filename
+  }
+  if (identityProof != undefined) {
+    body.identityProof.identityImage = config.pathImages + identityProof[0].filename
+  }
+  if (residentialProof != undefined) {
+    body.residentialProof.proofImage = config.pathImages + residentialProof[0].filename
+  }
+  if (bankPassbook != undefined) {
+    body.bank.bankPassbookUrl = config.pathImages + bankPassbook[0].filename
   }
 
   const bc = new BC(body);
