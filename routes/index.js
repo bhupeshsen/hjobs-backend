@@ -511,4 +511,17 @@ router.post('/feedback', (req, res) => {
   saveData(data, res);
 });
 
+async function saveData(data, res) {
+  try {
+    doc = await data.save();
+    console.log(doc)
+    return res.status(201).json({
+      message: 'data successfully added!'
+    });
+  }
+  catch (err) {
+    console.log(err)
+    return res.status(501).json(err);
+  }
+};
 module.exports = router;
