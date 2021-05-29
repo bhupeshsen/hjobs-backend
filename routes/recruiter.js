@@ -2,21 +2,18 @@ const express = require('express');
 const multer = require('multer');
 const ObjectId = require('mongodb').ObjectID;
 const path = require('path');
-const fs = require('fs');
 const config = require('../config/config');
 const { Company } = require('../models/company');
 const { User } = require('../models/user');
 const { Job } = require('../models/job');
 const Plan = require('../models/plan');
 const Notification = require('../models/notification');
-const Conversation = require('../models/conversation');
+const { Conversation } = require('../models/conversation');
 const router = express.Router();
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const path = 'public/images/company';
-    fs.mkdirSync(path, { recursive: true });
-    cb(null, path);
+    cb(null, 'public/images/company');
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + path.extname(file.originalname));
@@ -50,10 +47,10 @@ router.route('/company')
       body: 'Your profile has been updated.'
     }
 
-    Company.findByIdAndUpdate({ _id: companyId }, body).exec((err, doc) => {
+    Company.findByIdAndUpdate({ _id: companyId }, body, { new: true }).exec((err, doc) => {
       if (err) return res.status(400).json(err);
       if (!doc) return res.status(404).json({ message: 'Company not found!' });
-      res.status(200).json(doc);
+      res.status(200).json({ message: 'Company successfully updated!', user: doc });
     })
   });
 
@@ -162,9 +159,9 @@ router.get('/dashboard', isValidUser, (req, res) => {
 
 // Update Profile
 router.put('/profile', isValidUser, (req, res) => {
-  const userId = req.user._id;
+  const userId = req.user.role == 'admin' ? req.query.id : req.user._id;
   var body = req.body;
-  body.status = true;
+  body.recruiter.status = true;
 
   const options = { new: true, safe: true, upsert: true };
 
@@ -208,7 +205,7 @@ router.get('/view-profile/:userId', isValidUser, (req, res) => {
       .populate({
         path: 'appliedBy.user',
         match: { _id: ObjectId(userId) },
-        select: 'address knownLanguages name email mobile photo documents educations seeker'
+        select: 'name email mobile photo documents educations seeker'
       })
       .exec((err, job) => {
         if (err) return res.status(400).json(err);
@@ -221,7 +218,7 @@ router.get('/view-profile/:userId', isValidUser, (req, res) => {
   } else {
     const filter = {
       name: 1, email: 1, mobile: 1, photo: 1,
-      documents: 1, educations: 1, seeker: 1, knownLanguages: 1, address: 1
+      documents: 1, educations: 1, seeker: 1
     };
 
     User.findById({ _id: userId }, filter).exec((err, user) => {
@@ -254,7 +251,7 @@ router.route('/hire')
     const userId = req.body.userId;
 
     const query = { _id: ObjectId(jobId), 'appliedBy.user': ObjectId(userId) };
-    const update = { $addToSet: { hiredCandidates: ObjectId(userId) }, 'appliedBy.$.status': 5 };
+    const update = { $addToSet: { hiredCandidates: ObjectId(userId) }, 'appliedBy.$.status': 4 };
     const response = { message: 'Successfully hired.', user: userId };
 
     Job.findOneAndUpdate(query, update, { new: true }).exec((err, job) => {
@@ -267,14 +264,25 @@ router.route('/hire')
 // Wishlist
 router.route('/wishlist')
   .get(isValidUser, (req, res) => {
-    const companyId = req.query.companyId;
+    const id = req.user._id;
 
+    User.findById({ _id: id }, 'recruiter')
+      .populate('recruiter.wishlist', 'name email photo')
+      .exec((err, user) => {
+        if (err) return res.status(400).json(err);
+        res.status(200).json(user.recruiter.wishlist);
+      })
   })
-  .put(isValidUser, (req, res) => {
-    const companyId = req.query.companyId;
-    const action = req.query.action;
+  .post(isValidUser, (req, res) => {
+    const id = req.user._id;
+    const userId = req.body.userId;
 
+    const update = { $addToSet: { 'recruiter.wishlist': ObjectId(userId) } };
 
+    User.findByIdAndUpdate({ _id: id }, update).exec((err, _) => {
+      if (err) return res.status(400).json(err);
+      res.status(200).json({ message: 'Successfully added!' });
+    })
   })
 
 // Shortlist
@@ -353,20 +361,53 @@ router.route('/gallery')
   });
 
 // Conversations
-router.get('/conversations/:from/:to', isValidUser, (req, res) => {
-  const fromId = req.params.from;
-  const toId = req.params.to;
+router.route('/conversations')
+  .get(isValidUser, (req, res) => {
+    const id = req.user._id;
 
-  Conversation.find({
-    $or: [
-      { 'to.userId': ObjectId(fromId) }, { 'from.userId': ObjectId(fromId) },
-      { 'to.userId': ObjectId(toId) }, { 'from.userId': ObjectId(toId) }
-    ]
-  }, (err, results) => {
-    if (err) return res.status(400).json(err);
-    res.status(200).json(results);
+    Conversation.find({ from: ObjectId(id) })
+      .populate('to', 'name photo')
+      .exec((err, conversations) => {
+        if (err) return res.status(400).json(err);
+        conversations = [...new Set(conversations.map(item => item.to))]
+        res.status(200).json(conversations);
+      })
+  })
+
+/**
+ * GET /conversations/<Seeker Id>
+ * POST /conversations/<Seeker Id>
+ * @param {String} userId
+ * {body: {message: 'Text Message'}}
+ * */
+router.route('/conversations/:userId')
+  .get(isValidUser, (req, res) => {
+    const self = req.user._id;
+    const user = req.params.userId;
+
+    Conversation.find({
+      $or: [
+        { 'to': ObjectId(self) }, { 'from': ObjectId(self) },
+        { 'to': ObjectId(user) }, { 'from': ObjectId(user) }
+      ]
+    }).exec((err, conversations) => {
+      if (err) return res.status(400).json(err);
+      res.status(200).json(conversations);
+    });
+  })
+  .post(isValidUser, (req, res) => {
+    const from = req.user._id;
+    const to = req.params.userId;
+    const message = req.body.message;
+
+    var conversation = new Conversation({ to: to, from: from, message: message });
+    conversation.save(function (err) {
+      if (err) return res.status(400).json(err);
+      res.status(400).json({ message: 'Message successfully sent!' });
+
+
+    })
   });
-});
 
 // Search
 router.get('/search', isValidUser, (req, res) => {
@@ -395,7 +436,6 @@ router.get('/search', isValidUser, (req, res) => {
     res.status(200).json(users);
   });
 });
-
 
 function isValidUser(req, res, next) {
   if (req.isAuthenticated()) next();
