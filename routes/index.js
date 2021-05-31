@@ -17,112 +17,11 @@ router.get('/home', (req, res) => {
   const _path = __dirname + '/../public/gallery';
   var images = [];
 
+  const filter = 'seeker.status recruiter.status customer.status provider.status hunar.status';
+
   Promise.all([
     // [0] Plan
-    Plan.aggregate([
-      {
-        $facet: {
-          user: [{ $match: { userType: 'user' } }, {
-            $addFields: {
-              finalPrice: {
-                $cond: {
-                  if: {
-                    $eq: ['$discountPrice', 0]
-                  },
-                  then: '$originalPrice',
-                  else: "$discountPrice"
-                }
-              }
-            }
-          },
-          { $sort: { finalPrice: 1 } }],
-          company: [{ $match: { userType: 'company' } }, {
-            $addFields: {
-              finalPrice: {
-                $cond: {
-                  if: {
-                    $eq: ['$discountPrice', 0]
-                  },
-                  then: '$originalPrice',
-                  else: "$discountPrice"
-                }
-              }
-            }
-          },
-          { $sort: { finalPrice: 1 } }],
-          resume: [{ $match: { userType: 'resume' } }, {
-            $addFields: {
-              finalPrice: {
-                $cond: {
-                  if: {
-                    $eq: ['$discountPrice', 0]
-                  },
-                  then: '$originalPrice',
-                  else: "$discountPrice"
-                }
-              }
-            }
-          },
-          { $sort: { finalPrice: 1 } }],
-          jobBranding: [{ $match: { userType: 'jobBranding' } }, {
-            $addFields: {
-              finalPrice: {
-                $cond: {
-                  if: {
-                    $eq: ['$discountPrice', 0]
-                  },
-                  then: '$originalPrice',
-                  else: "$discountPrice"
-                }
-              }
-            }
-          },
-          { $sort: { finalPrice: 1 } }],
-          provider: [{ $match: { userType: 'provider' } }, {
-            $addFields: {
-              finalPrice: {
-                $cond: {
-                  if: {
-                    $eq: ['$discountPrice', 0]
-                  },
-                  then: '$originalPrice',
-                  else: "$discountPrice"
-                }
-              }
-            }
-          },
-          { $sort: { finalPrice: 1 } }],
-          customer: [{ $match: { userType: 'customer' } }, {
-            $addFields: {
-              finalPrice: {
-                $cond: {
-                  if: {
-                    $eq: ['$discountPrice', 0]
-                  },
-                  then: '$originalPrice',
-                  else: "$discountPrice"
-                }
-              }
-            }
-          },
-          { $sort: { finalPrice: 1 } }],
-          hunar: [{ $match: { userType: 'hunar' } }, {
-            $addFields: {
-              finalPrice: {
-                $cond: {
-                  if: {
-                    $eq: ['$discountPrice', 0]
-                  },
-                  then: '$originalPrice',
-                  else: "$discountPrice"
-                }
-              }
-            }
-          },
-          { $sort: { finalPrice: 1 } }],
-        }
-      },
-    ]).exec(),
+    getPlans(),
     // [1] Blog
     Blog.find({ published: true }, { description: 0 }).limit(6).exec(),
     // [2] Top Companies
@@ -159,19 +58,25 @@ router.get('/home', (req, res) => {
       }).populate('postedBy', 'name logo -_id').exec(),
     // [5] Gallery
     fs.readdirSync(_path).map(m => images.push(`gallery/${m}`)),
-    // Count
-
+    // [6] Count
+    getCounts()
   ]).then(data => {
     res.status(200).json({
       plans: data[0], blogs: data[1],
       topCompanies: data[2], videos: data[3],
       latestJobs: data[4], gallery: images,
-      totalCount: {}
+      totalCount: data[6][0]
     });
   }).catch(err => {
     res.status(400).json(err);
   })
 });
+
+// Total Counts
+router.get('/counts', async (req, res) => {
+  const doc = await getCounts();
+  res.status(200).json(doc[0]);
+})
 
 // Blogs
 router.get('/blogs', (_, res) => {
@@ -216,129 +121,19 @@ router.get('/latest-jobs', (_, res) => {
     {
       title: 1, designation: 1, employmentType: 1,
       location: 1, skills: 1, salary: 1, deadline: 1, experience: 1
-    }).populate('postedBy', 'name logo -_id').exec((err, jobs) => {
+    })
+    .populate('postedBy', 'name logo -_id')
+    .sort({ createdAt: -1 })
+    .exec((err, jobs) => {
       if (err) return res.status(400).json(err);
       res.status(200).json(jobs);
     })
 });
 
 /// Plans
-router.get('/plans', (_, res) => {
-  Plan.aggregate([
-    {
-      $facet: {
-        user: [
-          { $match: { userType: 'user' } }, {
-            $addFields: {
-              finalPrice: {
-                $cond: {
-                  if: {
-                    $eq: ['$discountPrice', 0]
-                  },
-                  then: '$originalPrice',
-                  else: "$discountPrice"
-                }
-              }
-            }
-          },
-          { $sort: { finalPrice: 1 } }
-        ],
-        recruiter: [
-          { $match: { userType: 'recruiter' } }, {
-            $addFields: {
-              finalPrice: {
-                $cond: {
-                  if: {
-                    $eq: ['$discountPrice', 0]
-                  },
-                  then: '$originalPrice',
-                  else: "$discountPrice"
-                }
-              }
-            }
-          },
-          { $sort: { finalPrice: 1 } }
-        ],
-        resume: [
-          { $match: { userType: 'resume' } }, {
-            $addFields: {
-              finalPrice: {
-                $cond: {
-                  if: {
-                    $eq: ['$discountPrice', 0]
-                  },
-                  then: '$originalPrice',
-                  else: "$discountPrice"
-                }
-              }
-            }
-          },
-          { $sort: { finalPrice: 1 } }
-        ],
-        jobBranding: [
-          { $match: { userType: 'jobBranding' } }, {
-            $addFields: {
-              finalPrice: {
-                $cond: {
-                  if: {
-                    $eq: ['$discountPrice', 0]
-                  },
-                  then: '$originalPrice',
-                  else: "$discountPrice"
-                }
-              }
-            }
-          },
-          { $sort: { finalPrice: 1 } }
-        ],
-        // provider: [{ $match: { userType: 'provider' } }, {
-        //   $addFields: {
-        //     finalPrice: {
-        //       $cond: {
-        //         if: {
-        //           $eq: ['$discountPrice', 0]
-        //         },
-        //         then: '$originalPrice',
-        //         else: "$discountPrice"
-        //       }
-        //     }
-        //   }
-        // },
-        // { $sort: { finalPrice: 1 } }],
-        // customer: [{ $match: { userType: 'customer' } }, {
-        //   $addFields: {
-        //     finalPrice: {
-        //       $cond: {
-        //         if: {
-        //           $eq: ['$discountPrice', 0]
-        //         },
-        //         then: '$originalPrice',
-        //         else: "$discountPrice"
-        //       }
-        //     }
-        //   }
-        // },
-        // { $sort: { finalPrice: 1 } }],
-        // hunar: [{ $match: { userType: 'hunar' } }, {
-        //   $addFields: {
-        //     finalPrice: {
-        //       $cond: {
-        //         if: {
-        //           $eq: ['$discountPrice', 0]
-        //         },
-        //         then: '$originalPrice',
-        //         else: "$discountPrice"
-        //       }
-        //     }
-        //   }
-        // },
-        // { $sort: { finalPrice: 1 } }],
-      }
-    },
-  ], (err, doc) => {
-    if (err) return res.status(400).json(err);
-    res.status(200).json(doc[0]);
-  });
+router.get('/plans', async (_, res) => {
+  const plans = await getPlans();
+  res.status(200).json(plans);
 });
 
 router.get('/plans/:user', (req, res) => {
@@ -426,21 +221,37 @@ router.get('/local-hunar-videos', (req, res) => {
   })
 });
 
-router.get('/top-associate', (req, res) => {
-  Company.find((err, results) => {
+router.get('/top-companies', (req, res) => {
+  User.find({ 'recruiter.addOnPlans.type': 'jobBranding' }).exec((err, companies) => {
     if (err) return res.status(400).json(err);
-    return res.status(200).json(results);
+    res.status(200).json(companies);
+  })
+  // res.status(200).json([{
+  //   name: 'Snow Corporate',
+  //   logo: `/images/company/snow-corp.png`,
+  //   address: 'Sec-34, Rohini, North Delhi, Pin- 110039'
+  // }]);
+});
+
+router.get('/our-associates', (_, res) => {
+  Company.find({}, 'name logo address').exec((err, companies) => {
+    if (err) return res.status(400).json(err);
+    res.status(200).json(companies);
   });
 });
 
-router.get('/top-companies', (req, res) => {
-  Company.find({},
-    { name: 1, logo: 1, about: 1 }, (err, results) => {
+/// All Jobs
+router.get('/jobs', (_, res) => {
+  const filter = { hiredCandidates: 0, shortLists: 0, appliedBy: 0 };
+
+  Job.find({}, filter)
+    .populate('postedBy', 'name logo')
+    .sort({ createdAt: -1 })
+    .exec((err, jobs) => {
       if (err) return res.status(400).json(err);
-      return res.status(200).json(results);
+      res.status(200).json(jobs);
     });
 });
-
 
 /// Search Job
 router.get('/search-jobs', (req, res) => {
@@ -511,17 +322,96 @@ router.post('/feedback', (req, res) => {
   saveData(data, res);
 });
 
-async function saveData(data, res) {
-  try {
-    doc = await data.save();
-    console.log(doc)
-    return res.status(201).json({
-      message: 'data successfully added!'
-    });
-  }
-  catch (err) {
-    console.log(err)
-    return res.status(501).json(err);
-  }
-};
+//
+const getPlans = () => {
+  return Plan.aggregate([
+    {
+      $facet: {
+        user: [
+          { $match: { userType: 'user' } }, {
+            $addFields: {
+              finalPrice: {
+                $cond: {
+                  if: {
+                    $eq: ['$discountPrice', 0]
+                  },
+                  then: '$originalPrice',
+                  else: "$discountPrice"
+                }
+              }
+            }
+          },
+          { $sort: { finalPrice: 1 } }
+        ],
+        recruiter: [
+          { $match: { userType: 'recruiter' } }, {
+            $addFields: {
+              finalPrice: {
+                $cond: {
+                  if: {
+                    $eq: ['$discountPrice', 0]
+                  },
+                  then: '$originalPrice',
+                  else: "$discountPrice"
+                }
+              }
+            }
+          },
+          { $sort: { finalPrice: 1 } }
+        ],
+        resume: [
+          { $match: { userType: 'resume' } }, {
+            $addFields: {
+              finalPrice: {
+                $cond: {
+                  if: {
+                    $eq: ['$discountPrice', 0]
+                  },
+                  then: '$originalPrice',
+                  else: "$discountPrice"
+                }
+              }
+            }
+          },
+          { $sort: { finalPrice: 1 } }
+        ],
+        jobBranding: [
+          { $match: { userType: 'jobBranding' } }, {
+            $addFields: {
+              finalPrice: {
+                $cond: {
+                  if: {
+                    $eq: ['$discountPrice', 0]
+                  },
+                  then: '$originalPrice',
+                  else: "$discountPrice"
+                }
+              }
+            }
+          },
+          { $sort: { finalPrice: 1 } }
+        ],
+      }
+    },
+  ]);
+}
+
+const getCounts = () => {
+  return User.aggregate([
+    {
+      $group: {
+        _id: null,
+        seeker: { $sum: { $cond: [{ $eq: ['$seeker.status', true] }, 1, 0] } },
+        recruiter: { $sum: { $cond: [{ $eq: ['$recruiter.status', true] }, 1, 0] } },
+        provider: { $sum: { $cond: [{ $eq: ['$provider.status', true] }, 1, 0] } },
+        customer: { $sum: { $cond: [{ $eq: ['$customer.status', true] }, 1, 0] } },
+        hunar: { $sum: { $cond: [{ $eq: ['$hunar.status', true] }, 1, 0] } },
+      }
+    },
+    {
+      $project: { _id: 0 }
+    }
+  ]);
+}
+
 module.exports = router;
