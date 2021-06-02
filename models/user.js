@@ -27,6 +27,7 @@ const jobRoleSchema = new Schema({
 }, { _id: false });
 
 const addOnSchema = new Schema({
+  type: { type: String },
   plan: { type: Schema.Types.ObjectId, default: null, ref: 'Plan' },
   expiryDate: { type: Date, default: new Date('1950-01-01T00:00:00.000Z') },
   planType: { type: String, trim: true },
@@ -74,6 +75,8 @@ const schema = new Schema({
   knownLanguages: Array,
   seeker: {
     status: { type: Boolean, default: false },
+    bio: String,
+    achievements: { type: Array, default: [] },
     iAm: String,
     savedCompany: [{ type: Schema.Types.ObjectId, ref: 'Company' }],
     savedJobs: [{ type: Schema.Types.ObjectId, ref: 'Job' }],

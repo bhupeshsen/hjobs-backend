@@ -236,6 +236,7 @@ router.get('/dashboard', isValidUser, (req, res) => {
   })
 });
 
+/// Govt. Jobs
 router.route('/govt-job')
   .post(isValidUser, upload.single('image'), (req, res) => {
     const body = req.body;
@@ -274,6 +275,24 @@ router.route('/govt-job')
       if (err) return res.status(400).json(err);
       res.status(200).json({ message: 'Govt. Job successfully deleted!' });
     })
+  })
+
+/// Private Jobs
+router.route('/job')
+  .get(isValidUser, (_, res) => {
+    const filter = 'name logo officialEmail phone address'
+    Job.find().populate('postedBy', filter).sort({ createdAt: -1 })
+      .exec((err, jobs) => {
+        if (err) return res.status(400).json(err);
+        res.status(200).json(jobs);
+      })
+  })
+  .delete(isValidUser, (req, res) => {
+    const jobId = req.query.id;
+    Job.findByIdAndDelete({ _id: jobId }).exec((err, _) => {
+      if (err) return res.status(400).json(err);
+      res.status(200).json({ message: 'Job successfully deleted!' });
+    });
   })
 
 /// User
@@ -336,6 +355,22 @@ router.route('/user')
         res.status(200).json({ message: 'User successfully deleted!' });
       });
   });
+
+router.put('/photo', upload.single('photo'), (req, res) => {
+  const id = req.query.id;
+  var update = {};
+
+  console.log(req.file)
+
+  if (req.file != undefined) {
+    update.photo = config.pathImages + req.file.filename;
+  }
+
+  User.findByIdAndUpdate({ _id: id }, update, { new: true }, (err, doc) => {
+    if (err) return res.status(400).json({ message: 'Bad Request', error: err });
+    res.status(200).json({ message: 'Photo successfully updated!', user: doc });
+  });
+})
 
 /// Recruiter
 router.route('/recruiter')
@@ -450,7 +485,16 @@ router.route('/business/:user')
 
     const name = user == 'bc' ? body.name : body.firstName;
     if (body.password == undefined || body.password == '') {
-      mail.passwordMail(req, name, body.email, user);
+      const token = jwt.sign({
+        name: name,
+        email: body.email,
+        userType: user
+      }, privateKEY, {
+        issuer: issuer, audience: audience,
+        algorithm: 'RS256', expiresIn: '24h'
+      });
+
+      body.passwordResetToken = token;
     }
 
     const model = user == 'fse' ? FSE
@@ -460,7 +504,14 @@ router.route('/business/:user')
     const data = new model(body);
     data.save((err) => {
       if (err) return res.status(400).json(err);
-      res.status(200).json({ message: 'Successfully registered!' })
+      res.status(200).json({ message: 'Successfully registered!' });
+
+      // Send Email
+      if (body.password == undefined || body.password == '') {
+        const baseUrl = `${req.protocol}://${req.get('host')}`;
+        const htmlMessage = mailScript.businessPartnerPassword(baseUrl, user.name, email, token);
+        mail.sendMail(email, user.name, 'Create new password', '', htmlMessage);
+      }
     })
   })
   .put(isValidUser, businessUpload, async (req, res) => {
@@ -573,9 +624,15 @@ router.route('/blog')
       res.status(200).json(blogs);
     });
   })
-  .post(isValidUser, (req, res) => {
+  .post(isValidUser, upload.single('thumbnail'), (req, res) => {
     var body = req.body;
     body.postedBy = req.user._id;
+
+    console.log(req.file);
+
+    if (req.file != undefined) {
+      body.thumbnail = config.pathImages + req.file.filename;
+    }
 
     const blog = new Blog(body);
     blog.save((err) => {
@@ -583,8 +640,18 @@ router.route('/blog')
       res.status(200).json({ message: 'Blog successfully posted!' });
     });
   })
-  .put(isValidUser, (req, res) => {
+  .put(isValidUser, multer().array(), (req, res) => {
+    const id = req.query.id;
+    const body = req.body;
 
+    // if (req.file != undefined) {
+    //   body.thumbnail = config.pathImages + req.file.filename;
+    // }
+
+    Blog.findByIdAndUpdate({ _id: id }, body).exec((err, _) => {
+      if (err) return res.status(400).json(err);
+      res.status(200).json({ message: 'Blog successfully updated!' });
+    });
   })
   .delete(isValidUser, (req, res) => {
     const blogId = req.query.id;

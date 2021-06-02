@@ -7,6 +7,9 @@ const { User } = require('../models/user');
 const { Job } = require('../models/job');
 const CustomAlert = require('../models/custom-alert');
 const { Company } = require('../models/company');
+const { Conversation } = require('../models/conversation');
+const { sendMail } = require('../helper/mail');
+const { } = require('../helper/mail-script');
 const router = express.Router();
 
 const compiledFunction = pug.compileFile(__dirname + '/../views/resume.pug');
@@ -23,7 +26,10 @@ router.get('/dashboard', isValidUser, (req, res) => {
     const savedCompany = user.seeker.savedCompany;
     const savedJobs = user.seeker.savedJobs;
 
-    Job.find({ skills: { $in: user.seeker.skills } }, { _id: 1 })
+    Job.find({
+      skills: { $in: user.seeker.skills },
+      deadline: { $gte: newDate }
+    }, { _id: 1 })
       .exec((err, rJobs) => {
         if (err) return res.status(400).json(err);
         const response = {
@@ -42,7 +48,7 @@ router.get('/dashboard', isValidUser, (req, res) => {
 router.put('/profile', isValidUser, (req, res) => {
   const userId = req.user._id;
   var body = req.body;
-  body.status = true;
+  body.seeker.status = true;
 
   const options = { new: true, safe: true, upsert: true };
 
@@ -68,13 +74,18 @@ router.put('/apply-job/:jobId', isValidUser, (req, res) => {
   const updateUser = { $addToSet: { 'seeker.appliedJobs': jobId } };
 
   Job.findOneAndUpdate(query, update)
-    .populate('postedBy', 'name')
+    .populate('postedBy', 'name officialEmail')
     .exec(async (err, job) => {
       if (err) return res.status(400).json(err);
       if (!job) return res.status(404).json({ message: 'Job is expired or already applied!' });
 
       await User.findByIdAndUpdate({ _id: userId }, updateUser).exec();
       res.status(200).json({ message: 'Job is successfully applied!' });
+
+      // send mail
+      const htmlMessage = '';
+      const subject = '';
+      sendMail(job.postedBy.officialEmail, job.postedBy.name, subject, '', htmlMessage);
     });
 });
 
@@ -164,6 +175,14 @@ router.route('/saved-company')
       if (err) return res.status(400).json(err);
       if (!user) return res.status(404).json(
         { message: 'User not found or already saved this company.' });
+      
+      // send mail
+      Company.findById({ _id: companyId }).exec((_, company) => {
+        const htmlMessage = '';
+        const subject = '';
+        sendMail(company.officialEmail, company.name, subject, '', htmlMessage);
+      })
+      
       res.status(200).json(user);
     });
 
@@ -178,14 +197,14 @@ router.get('/job', isValidUser, (req, res) => {
   const jobId = req.query.jobId;
   const skills = req.query.skills;
 
-
   const query = jobId == undefined
     ? companyId != undefined
       ? { postedBy: companyId, skills: { $regex: '.*' + skills + '.*', $options: 'i' } } : {}
     : { _id: jobId };
   const filter = { hiredCandidates: 0, shortLists: 0, appliedBy: 0 };
-  const filter1 = { hiredCandidates: 0, shortLists: 0 };
-  const model = jobId == undefined ? Job.find(query, filter) : Job.findById(query, filter1);
+  const filter1 = { projection: { hiredCandidates: 0, shortLists: 0 }, new: true };
+  const update = { $inc: { views: 1 } };
+  const model = jobId == undefined ? Job.find(query, filter) : Job.findByIdAndUpdate(query, update, filter1);
   const filter2 = jobId == undefined ? 'name logo' : 'name logo about perks gallery';
 
   model
@@ -193,9 +212,9 @@ router.get('/job', isValidUser, (req, res) => {
     .populate('postedBy', filter2)
     .sort({ createdAt: -1 })
     .exec((err, jobs) => {
-      if (err) return res.status(400).json(err);
+      if (err) return res.status(401).json(err);
       if (jobId != undefined) {
-        jobs.appliedBy = jobs.appliedBy.length > 0 ? jobs.appliedBy.filter(m => m.user != null) : [];
+        jobs.appliedBy = jobs.appliedBy.length > 0 ? jobs.appliedBy.find(m => m.user != null) : {};
       }
       res.status(200).json(jobs);
     });
@@ -303,6 +322,63 @@ async function saveData(data, res) {
     return res.status(501).json(err);
   }
 };
+
+// Conversations
+router.route('/conversations')
+  .get(isValidUser, (req, res) => {
+    const id = req.user._id;
+
+    Conversation.find({ from: ObjectId(id) })
+      .populate('from', 'name photo')
+      .exec((err, conversations) => {
+        if (err) return res.status(400).json(err);
+        conversations = [...new Set(conversations.map(item => item.from))]
+        res.status(200).json(conversations);
+      })
+  })
+
+/**
+ * GET /conversations/<Contact Person Id>
+ * POST /conversations/<Contact Person Id>
+ * @param {String} userId
+ * {body: {message: 'Text Message'}}
+ * */
+router.route('/conversations/:userId')
+  .get(isValidUser, (req, res) => {
+    const self = req.user._id;
+    const user = req.params.userId;
+
+    Conversation.find({
+      $or: [
+        { 'to': ObjectId(self) }, { 'from': ObjectId(self) },
+        { 'to': ObjectId(user) }, { 'from': ObjectId(user) }
+      ]
+    }).exec((err, conversations) => {
+      if (err) return res.status(400).json(err);
+      res.status(200).json(conversations);
+    });
+  })
+  .post(isValidUser, (req, res) => {
+    const from = req.user._id;
+    const to = req.params.userId;
+    const message = req.body.message;
+
+    // functions.getData(body.from.userId, 'company').then(v => {
+    //   var notification = {
+    //     title: 'Message',
+    //     body: `You have received a new message from ${v.name}`
+    //   }
+
+    //   // Send Notification To Job Seeker
+    //   // fcmFunctions.sendNotificationToUser(body.to.userId, 'seeker', notification);
+    // });
+
+    var conversation = new Conversation({ to: to, from: from, message: message });
+    conversation.save(function (err) {
+      if (err) return res.status(400).json(err);
+      res.status(400).json({ message: 'Message successfully sent!' });
+    })
+  });
 
 function isValidUser(req, res, next) {
   if (req.isAuthenticated()) next();

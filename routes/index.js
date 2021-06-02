@@ -59,13 +59,18 @@ router.get('/home', (req, res) => {
     // [5] Gallery
     fs.readdirSync(_path).map(m => images.push(`gallery/${m}`)),
     // [6] Count
-    getCounts()
+    getCounts(),
+    // [7] Govt Jobs
+    getGovtJobs(req, 6),
+    // [8] All Jobs
+    getAllJobs(6)
   ]).then(data => {
     res.status(200).json({
       plans: data[0], blogs: data[1],
       topCompanies: data[2], videos: data[3],
       latestJobs: data[4], gallery: images,
-      totalCount: data[6][0]
+      totalCount: data[6][0],
+      govtJobs: data[7], allJobs: data[8]
     });
   }).catch(err => {
     res.status(400).json(err);
@@ -95,21 +100,10 @@ router.get('/blog/:id', (req, res) => {
 });
 
 /// Govt Jobs
-router.route('/govt-jobs')
-  .get((req, res) => {
-    const today = new Date();
-    const newDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
-    const category = req.query.category;
-
-    const query = category != undefined
-      ? { category: category, deadline: { $gte: newDate } }
-      : { deadline: { $gte: newDate } }
-
-    GovtJob.find(query).sort({ createdAt: -1 }).exec((err, jobs) => {
-      if (err) return res.status(400).json(err);
-      res.status(200).json(jobs);
-    });
-  });
+router.get('/govt-jobs', async (req, res) => {
+  const jobs = await getGovtJobs(req, undefined);
+  res.status(200).json(jobs);
+});
 
 /// Latest Jobs
 router.get('/latest-jobs', (_, res) => {
@@ -241,16 +235,9 @@ router.get('/our-associates', (_, res) => {
 });
 
 /// All Jobs
-router.get('/jobs', (_, res) => {
-  const filter = { hiredCandidates: 0, shortLists: 0, appliedBy: 0 };
-
-  Job.find({}, filter)
-    .populate('postedBy', 'name logo')
-    .sort({ createdAt: -1 })
-    .exec((err, jobs) => {
-      if (err) return res.status(400).json(err);
-      res.status(200).json(jobs);
-    });
+router.get('/jobs', async (_, res) => {
+  const jobs = await getAllJobs(undefined);
+  res.status(200).json(jobs);
 });
 
 /// Search Job
@@ -405,13 +392,44 @@ const getCounts = () => {
         recruiter: { $sum: { $cond: [{ $eq: ['$recruiter.status', true] }, 1, 0] } },
         provider: { $sum: { $cond: [{ $eq: ['$provider.status', true] }, 1, 0] } },
         customer: { $sum: { $cond: [{ $eq: ['$customer.status', true] }, 1, 0] } },
-        hunar: { $sum: { $cond: [{ $eq: ['$hunar.status', true] }, 1, 0] } },
+        hunar: { $sum: { $cond: [{ $eq: ['$hunar.status', true] }, 1, 0] } }
       }
     },
     {
-      $project: { _id: 0 }
+      $lookup: {
+        from: Job.collection.name,
+        pipeline: [
+          { $count: 'count' },
+        ],
+        as: 'jobs'
+      }
+    },
+    { $unwind: { path: '$jobs', preserveNullAndEmptyArrays: true } },
+    {
+      $project: { _id: 0, seeker: 1, recruiter: 1, provider: 1, customer: 1, hunar: 1, jobs: '$jobs.count' }
     }
   ]);
+}
+
+const getGovtJobs = (req, limit) => {
+  const today = new Date();
+  const newDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
+  const category = req.query.category;
+
+  const query = category != undefined
+    ? { category: category, deadline: { $gte: newDate } }
+    : { deadline: { $gte: newDate } }
+
+  return GovtJob.find(query).sort({ createdAt: -1 }).limit(limit);
+}
+
+const getAllJobs = (limit) => {
+  const filter = { hiredCandidates: 0, shortLists: 0, appliedBy: 0 };
+
+  return Job.find({}, filter)
+    .populate('postedBy', 'name logo')
+    .sort({ createdAt: -1 })
+    .limit(limit);
 }
 
 module.exports = router;

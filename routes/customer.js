@@ -10,7 +10,7 @@ const router = express.Router();
 router.put('/profile', isValidUser, (req, res) => {
   const userId = req.user._id;
   var body = req.body;
-  body.status = true;
+  body.customer.status = true;
 
   const options = { new: true, safe: true, upsert: true };
 

@@ -10,6 +10,7 @@ const config = require('../config/config');
 const randToken = require('rand-token');
 
 const mail = require('../helper/mail');
+const mailScript = require('../helper/mail-script');
 const { User } = require('../models/user');
 const { Admin } = require('../models/admin');
 const { FSE } = require('../models/business/fse');
@@ -17,8 +18,8 @@ const { Advisor } = require('../models/business/advisor');
 const { BC, CM } = require('../models/business/business');
 
 // PRIVATE and PUBLIC key
-var privateKEY = fs.readFileSync(__dirname + '/../config/jwt.key', 'utf8');
-
+const privateKEY = fs.readFileSync(__dirname + '/../config/jwt.key', 'utf8');
+const publicKEY = fs.readFileSync(__dirname + '/../config/jwt.key.pub', 'utf8');
 const issuer = 'admin.hindustaanjobs.com';        // Issuer
 const audience = 'hindustaanjobs.com';            // Audience
 
@@ -40,50 +41,67 @@ router.get('/', function (req, res) {
 });
 
 /// Reset Password
-router.post('/reset-password', (req, res) => {
-  const email = req.body.email;
-
-  User.findOne({ email: email }, (err, doc) => {
-    if (err) return res.status(400).json(err);
-    if (!doc) return res.status(400).json({ message: 'Incorrect email address!' });
+router.route('/reset-password')
+  .get((req, res) => {
+    const token = req.query.token;
+    res.render('reset-password', { title: 'Reset Password', token: token });
+  })
+  .post((req, res) => {
+    const email = req.body.email;
 
     const token = jwt.sign({
-      _id: doc._id,
-      email: doc.email
+      _id: user._id,
+      email: user.email,
+      userType: user.userType
     }, privateKEY, {
       issuer: issuer, audience: audience,
       algorithm: 'RS256', expiresIn: '24h'
     });
 
-    // Send Email
-    mail.sendMail(
-      email,
-      doc.name,
-      'Request for reset password',
-      `Dear ${doc.name},On your request, we have sent the login credentials of your account as mentioned below.
-      Your Login Details
-      User Email: ${email}
-      Please click on the below link to reset your password-
-      ${req.protocol}://${req.get('host')}/reset-password/${user}/${token}
-      Regards, Joogle Team
-      This is An Auto Generated Notification Email. Please Do Not Respond To This.`,
-      `Dear <b>${doc.name}</b>,<br>On your request, we have sent the login credentials of your account as mentioned below.
-      <br><b>Your Login Details</b><br><br><br>
-      User Email: ${email}<br><br>
-      Please click on the below link to reset your password-<br><br>
-      <a href="${req.protocol}://${req.get('host')}/reset-password/${user}/${token}">
-      ${req.protocol}://${req.get('host')}/reset-password/${user}/${token}
-      </a><br><br><br>Regards,<br><br>Joogle Team<br><br>
-      This is An Auto Generated Notification Email. Please Do Not Respond To This.`
-    ).then((result) => {
-      console.log(result.body)
-      res.status(200).json({ message: 'An email sent to your registered email address.' });
-    }).catch((err) => {
-      console.log(err.statusCode);
-      res.status(400).json(err);
+    User.findOneAndUpdate({ email: email },
+      { passwordResetToken: token }
+    ).exec((err, user) => {
+      if (err) return res.status(400).json(err);
+      if (!user) return res.status(400).json({ message: 'User not found!' });
+
+      // Send Email
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      const htmlMessage = mailScript.resetPassword(baseUrl, user.name, email, token);
+      mail.sendMail(email, user.name, 'Request for reset password', '', htmlMessage)
+        .then(() => {
+          res.status(202).json({ message: 'An email sent to your registered email address.' });
+        }).catch((err) => {
+          console.log(err);
+          res.status(400).json(err);
+        });
     });
+  })
+  .put((req, res) => {
+    const pass = req.body.password;
+    const r_pass = req.body.r_password;
+    const token = req.query.token;
+
+    if (pass === r_pass) {
+      jwt.verify(token, publicKEY, (err, decoded) => {
+        if (err) return res.send({ message: 'Invalid token!' });
+
+        const type = decoded.userType;
+        const Model = type == 'fse' ? FSE : type == 'ba' ? Advisor
+          : type == ' bc' ? BC : type == 'cm' ? CM : User;
+
+        Model.findOneAndUpdate(
+          { email: decoded.email, passwordResetToken: token },
+          { password: Model.hashPassword(pass), passwordResetToken: null })
+          .exec((err, user) => {
+            if (err) return res.send({ message: 'Something went wrong!', error: err });
+            if (!user) return res.send({ message: 'Token expired!' });
+            res.send({ message: 'Password successfully changed.' });
+          })
+      });
+    } else {
+      res.send({ message: 'Password not match!' });
+    }
   });
-});
 
 /// Register
 router.post('/register', (req, res) => {
@@ -314,26 +332,19 @@ router.post('/business/:type/login', (req, res, next) => {
 
       // Refresh Token
       const refreshToken = randToken.uid(256);
-      const _user = {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        mobile: user.mobile,
-        address: user.address,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        photo: user.photo,
-        code:code,
-        documents:user.documents,
-        userType:user.userType,
-        approved: user.approved,
-        disabled: user.disabled,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt
-      }
+      // const _user = {
+      //   _id: user._id,
+      //   name: user.name,
+      //   email: user.email,
+      //   mobile: user.mobile,
+      //   approved: user.approved,
+      //   disabled: user.disabled,
+      //   createdAt: user.createdAt,
+      //   updatedAt: user.updatedAt
+      // }
 
       return res.status(200).json({
-        message: 'Welcome back', user: _user,
+        message: 'Welcome back', user: user,
         token: JWTToken, refreshToken: refreshToken
       });
     });
@@ -342,13 +353,12 @@ router.post('/business/:type/login', (req, res, next) => {
 
 /// BC - Register
 var bcUpload = upload.fields([
-  { name: 'photo', maxCount: 1 },
-  { name: 'aadharCard[aadharF]', maxCount: 1 },
-  { name: 'aadharCard[aadharB]', maxCount: 1 },
-  { name: 'panCard[panCardUrl]', maxCount: 1 },
-  { name: 'identityProof[identityImage]', maxCount: 1 },
-  { name: 'residentialProof[proofImage]', maxCount: 1 },
-  { name: 'bank[bankPassbookUrl]', maxCount: 1 }
+  { name: 'documents[aadharCard][aadharF]', maxCount: 1 },
+  { name: 'documents[aadharCard][aadharB]', maxCount: 1 },
+  { name: 'documents[panCard][image]', maxCount: 1 },
+  { name: 'documents[residentialProof][proofImage]', maxCount: 1 },
+  { name: 'documents[bank][passbook]', maxCount: 1 },
+  { name: 'photo', maxCount: 1 }
 ]);
 router.post('/business/bc/register', bcUpload, (req, res) => {
   var body = req.body;
@@ -358,32 +368,36 @@ router.post('/business/bc/register', bcUpload, (req, res) => {
     body.addedByCode = null;
   }
 
-  var photo = req.files['photo'];
-  var aadharF = req.files['aadharCard[aadharF]'];
-  var aadharB = req.files['aadharCard[aadharB]'];
-  var panCard = req.files['panCard[panCardUrl]'];
-  var identityProof = req.files['identityProof[identityImage]'];
-  var residentialProof = req.files['residentialProof[proofImage]'];
-  var bankPassbook = req.files['bank[bankPassbookUrl]'];
+  const aadharF = req.files['documents[aadharCard][aadharF]'];
+  const aadharB = req.files['documents[aadharCard][aadharB]'];
+  const panCard = req.files['documents[panCard][image]'];
+  const residential = req.files['documents[residentialProof][proofImage]'];
+  const bank = req.files['documents[bank][passbook]'];
+  const photo = req.files['photo'];
+
+  if (aadharF != undefined && aadharB != undefined) {
+    body.documents.aadharCard = {};
+    body.documents.aadharCard.aadharF = config.pathImages + aadharF[0].filename;
+    body.documents.aadharCard.aadharB = config.pathImages + aadharB[0].filename;
+  }
+
+  if (panCard != undefined) {
+    body.documents.panCard = {};
+    body.documents.panCard.image = config.pathImages + panCard[0].filename;
+  }
+
+  if (residential != undefined) {
+    body.documents.residentialProof = {};
+    body.documents.residentialProof.proofImage = config.pathImages + residential[0].filename;
+  }
+
+  if (bank != undefined) {
+    body.documents.bank = {};
+    body.documents.bank.passbook = config.pathImages + bank[0].filename;
+  }
 
   if (photo != undefined) {
     body.photo = config.pathImages + photo[0].filename
-  }
-  if (aadharF != undefined && aadharB != undefined) {
-    body.aadharCard.aadharF = config.pathImages + aadharF[0].filename;
-    body.aadharCard.aadharB = config.pathImages + aadharB[0].filename;
-  }
-  if (panCard != undefined) {
-    body.panCard.panCardUrl = config.pathImages + panCard[0].filename
-  }
-  if (identityProof != undefined) {
-    body.identityProof.identityImage = config.pathImages + identityProof[0].filename
-  }
-  if (residentialProof != undefined) {
-    body.residentialProof.proofImage = config.pathImages + residentialProof[0].filename
-  }
-  if (bankPassbook != undefined) {
-    body.bank.bankPassbookUrl = config.pathImages + bankPassbook[0].filename
   }
 
   const bc = new BC(body);
@@ -406,8 +420,13 @@ function generateReferralCode() {
 
 async function saveData(data, res) {
   try {
-    doc = await data.save();
-    console.log(doc)
+    const doc = await data.save();
+
+    // Welcome Mail
+    const htmlMessage = mailScript.welcomeMail(doc.name);
+    const subject = 'Mr. Rajput (Director) wants to talk to you.';
+    mail.sendMail(doc.email, doc.name, subject, '', htmlMessage);
+
     return res.status(201).json({ message: 'Data successfully saved!' });
   }
   catch (err) {

@@ -4,9 +4,12 @@ const fs = require('fs');
 const path = require('path');
 const ObjectId = require('mongodb').ObjectID;
 const config = require('../config/config');
+const mail = require('../helper/mail');
+const mailScript = require('../helper/mail-script');
 const { User } = require('../models/user');
 const { Order } = require('../models/provider/order');
 const { Service } = require('../models/provider/service');
+const { providerOrder } = require('../helper/notification');
 const router = express.Router();
 
 const storage = multer.diskStorage({
@@ -26,7 +29,7 @@ let upload = multer({ storage: storage });
 router.put('/profile', isValidUser, (req, res) => {
   const userId = req.user._id;
   var body = req.body;
-  body.status = true;
+  body.provider.status = true;
 
   const options = { new: true, safe: true, upsert: true };
 
@@ -35,6 +38,11 @@ router.put('/profile', isValidUser, (req, res) => {
       if (err) return res.status(400).json(err);
       if (!user) return res.status(404).json({ message: 'User not found!' });
       res.status(200).json({ message: 'Profile successfully updated!', user: user });
+
+      // send mail
+      const htmlMessage = '';
+      const subject = '';
+      mail.sendMail(user.email, user.name, subject, '', htmlMessage);
     });
 });
 
@@ -74,6 +82,11 @@ router.route('/service')
         .exec((err, _) => {
           if (err) return res.status(400).json(err);
           res.status(200).json({ message: 'Service successfully added!' });
+
+          // send mail
+          const htmlMessage = '';
+          const subject = '';
+          mail.sendMail('email all customer', 'name all customer', subject, '', htmlMessage);
         });
     });
   })
@@ -154,7 +167,7 @@ router.route('/order')
       ? { _id: ObjectId(orderId), provider: ObjectId(userId) }
       : { provider: ObjectId(userId) };
     const filter = 'name mobile address customer.telephone';
-    const model = orderId != undefined ? Order.findOne(query) : Order.find(query);  
+    const model = orderId != undefined ? Order.findOne(query) : Order.find(query);
 
     model.populate('customer', filter)
       .populate('services')
@@ -165,20 +178,19 @@ router.route('/order')
       });
   })
   .put(isValidUser, (req, res) => {
-    const userId = req.user._id;
     const orderId = req.query.orderId;
-
     const status = req.body.status;
-    const customerId = req.body.customer;
 
     // [Status] 0 => Created; 1 => Accepted; 2 => Rejected;
     const update = status == 'accept' ? { status: 1 } : status == 'reject' ? { status: 2 } : {}
 
-    Order.findByIdAndUpdate({ _id: orderId },
-      update, { new: true })
+    Order.findByIdAndUpdate({ _id: orderId }, update, { new: true })
+      .populate('customer', 'fcmToken')
       .exec((err, doc) => {
         if (err) return res.status(400).json(err);
-        res.status(200).json(doc);
+        res.status(200).json({ message: `Order successfully ${status}ed.` });
+
+        providerOrder(doc.fcmToken, status);
       });
   });
 

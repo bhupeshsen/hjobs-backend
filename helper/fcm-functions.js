@@ -1,36 +1,14 @@
 const admin = require('firebase-admin');
-const company = require("../models/company");
-const Customer = require('../models/Customer');
-const JobSeeker = require('../models/JobSeeker');
+const { User } = require('../models/user');
 
-module.exports.sendNotificationToUser = async function (userId, userType, notification) {
-  var doc = {};
-
-  if (userType == 'company') {
-    doc = await company.findById(userId, (err, result) => {
-      if (err) return;
-      if (result != null) return result; else return;
-    });
-  } else if (userType == 'customer') {
-    doc = await Customer.findById(userId, (err, result) => {
-      if (err) return;
-      if (result != null) return result; else return;
-    });
-  } else if (userType == 'seeker') {
-    doc = await JobSeeker.findById(userId, (err, result) => {
-      if (err) return;
-      if (result != null) return result; else return;
-    });
-  }
-
-  var registrationToken = doc['fcmToken'];
-
+const pushNotificationUser = async function (fcmToken, data) {
   var message = {
-    notification: notification,
-    token: registrationToken
+    notification: data,
+    data: data,
+    token: fcmToken
   };
 
-  if (registrationToken != null) {
+  if (fcmToken != null) {
     await admin.messaging().send(message)
       .then((response) => {
         // Response is a message ID string.
@@ -42,7 +20,7 @@ module.exports.sendNotificationToUser = async function (userId, userType, notifi
   }
 }
 
-module.exports.sendNotificationToTopic = function (topic, data) {
+const pushNotificationTopic = function (topic, data) {
   var message = {
     data: data,
     topic: topic
@@ -59,7 +37,7 @@ module.exports.sendNotificationToTopic = function (topic, data) {
     });
 }
 
-module.exports.sendNotificationToMultiUser = async function (userIds, userType, notification) {
+const pushNotificationMultiUser = async function (userIds, userType, notification) {
   var doc = [];
   const query = { _id: { $in: userIds } };
   const project = { fcmToken: 1, _id: 0 };
@@ -102,4 +80,8 @@ module.exports.sendNotificationToMultiUser = async function (userIds, userType, 
     .catch((error) => {
       console.log('Error sending message:', error);
     });
+}
+
+module.exports = {
+  pushNotificationUser, pushNotificationMultiUser, pushNotificationTopic
 }

@@ -12,6 +12,7 @@ var schema = new Schema({
   about: { type: String, trim: true },
   perks: { type: String, trim: true },
   gallery: { type: Array, default: [] },
+  savedResume: { type: Array, default: [] },
   address: {
     address: { type: String, trim: true },
     state: { type: String },

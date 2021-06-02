@@ -7,8 +7,11 @@ const { Company } = require('../models/company');
 const { User } = require('../models/user');
 const { Job } = require('../models/job');
 const Plan = require('../models/plan');
-const Notification = require('../models/notification');
+const { Notification } = require('../models/notification');
 const { Conversation } = require('../models/conversation');
+const { notifyConversation, notifyShortList } = require('../helper/notification');
+const { sendMail } = require('../helper/mail');
+const { } = require('../helper/mail-script');
 const router = express.Router();
 
 const storage = multer.diskStorage({
@@ -214,6 +217,11 @@ router.get('/view-profile/:userId', isValidUser, (req, res) => {
 
         const user = job.appliedBy[0].user;
         res.status(200).json(user);
+
+        // send mail
+        const htmlMessage = '';
+        const subject = '';
+        sendMail(user.email, user.name, subject, '', htmlMessage);
       })
   } else {
     const filter = {
@@ -257,7 +265,12 @@ router.route('/hire')
     Job.findOneAndUpdate(query, update, { new: true }).exec((err, job) => {
       if (err) return res.status(400).json(err);
       if (!job) return res.status(404).json({ message: 'Job not found!' });
-      res.status(200).json(job);
+      res.status(200).json(response);
+
+      // send mail
+      const htmlMessage = '';
+      const subject = '';
+      mail.sendMail(req.user.email, req.user.name, subject, '', htmlMessage);
     })
   });
 
@@ -282,6 +295,11 @@ router.route('/wishlist')
     User.findByIdAndUpdate({ _id: id }, update).exec((err, _) => {
       if (err) return res.status(400).json(err);
       res.status(200).json({ message: 'Successfully added!' });
+
+      // send mail
+      const htmlMessage = '';
+      const subject = '';
+      sendMail(user.email, user.name, subject, '', htmlMessage);
     })
   })
 
@@ -314,6 +332,8 @@ router.route('/shortlist')
       if (err) return res.status(400).json(err);
       if (!job) return res.status(404).json({ message: 'Job not found!' });
       res.status(200).json(response);
+
+      notifyShortList(userId, { fcmToken: req.user.fcmToken }, job.title);
     })
   })
 
@@ -403,9 +423,12 @@ router.route('/conversations/:userId')
     var conversation = new Conversation({ to: to, from: from, message: message });
     conversation.save(function (err) {
       if (err) return res.status(400).json(err);
-      res.status(400).json({ message: 'Message successfully sent!' });
+      res.status(200).json({ message: 'Message successfully sent!' });
 
-
+      conversation.populate('to').execPopulate()
+        .then((user) => {
+          notifyConversation(user.fcmToken, user.name);
+        });
     })
   });
 
@@ -421,21 +444,61 @@ router.get('/search', isValidUser, (req, res) => {
   const skills = req.query.skills;
 
   const query = {
-    _id: { $ne: userId }, 'seeker.desireSalary': desireSalary,
-    'seeker.jobType': jobType, 'seeker.empType': empType,
+    _id: { $ne: userId }, 'seeker.status': true, 'seeker.desiredSalary': desireSalary,
+    'seeker.desiredJobType': jobType, 'seeker.desiredEmpType': empType,
     'address.pinCode': pinCode, 'address.city': location,
     'seeker.skills': skills
   }
-  const filter = 'name email mobile photo address';
+  const filter = 'name email mobile photo address educations seeker.desiredSalary seeker.prefWorkLocation seeker.desiredJobType seeker.desiredEmpType seeker.skills';
 
   Object.keys(query).forEach(key => query[key] === undefined ? delete query[key] : {});
-  console.log(query);
 
   User.find(query, filter).exec((err, users) => {
     if (err) return res.status(400).json(err);
     res.status(200).json(users);
   });
 });
+
+// Save Resume
+router.route('/save-resume')
+  .get(isValidUser, (req, res) => {
+    const companyId = req.query.companyId;
+
+    Company.findById({ _id: companyId }, 'savedResume')
+      .exec((err, company) => {
+        if (err) return res.status(400).json(err);
+        if (!company) return res.status(404).json({ message: 'Not found!' });
+        res.status(200).json(company.savedResume);
+      });
+  })
+  .post(isValidUser, (req, res) => {
+    const companyId = req.query.companyId;
+    const resume = req.body.resume;
+
+    const update = { $addToSet: { savedResume: resume } };
+    const options = { projection: { savedResume: 1 }, new: true };
+
+    Company.findByIdAndUpdate({ _id: companyId }, update, options)
+      .exec((err, company) => {
+        if (err) return res.status(400).json(err);
+        if (!company) return res.status(404).json({ message: 'Not found!' });
+        res.status(200).json(company.savedResume);
+      });
+  })
+  .delete(isValidUser, (req, res) => {
+    const companyId = req.query.companyId;
+    const resume = req.body.resume;
+
+    var update = { $pull: { savedResume: resume } }
+    const options = { projection: { savedResume: 1 }, new: true };
+
+    Company.findByIdAndUpdate({ _id: companyId }, update, options)
+      .exec((err, company) => {
+        if (err) return res.status(400).json(err);
+        if (!company) return res.status(404).json({ message: 'Not found!' });
+        res.status(200).json(company.savedResume);
+      });
+  });
 
 function isValidUser(req, res, next) {
   if (req.isAuthenticated()) next();

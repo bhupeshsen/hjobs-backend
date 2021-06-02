@@ -7,6 +7,8 @@ const User = require('../models/user').User;
 const { Payment } = require('../models/payment');
 const { Advisor } = require('../models/business/advisor');
 const { BC } = require('../models/business/business');
+const mailScript = require('../helper/mail-script');
+const mail = require('../helper/mail');
 
 var instance = new Razorpay({
   key_id: config.razorpayKey,
@@ -96,7 +98,7 @@ async function subscribe(body, user, res) {
           ? new Date(year, month + duration, day)
           : new Date(year, month, day + duration);
 
-        if (doc.plan.userType == 'company') {
+        if (doc.plan.userType == 'recruiter') {
           update = {
             'recruiter.plan': {
               currentPlan: planId,
@@ -107,6 +109,7 @@ async function subscribe(body, user, res) {
         } else if (doc.plan.userType == 'resume' || doc.plan.userType == 'jobBranding') {
           update = {
             'recruiter.addOnPlans': {
+              type: doc.plan.userType,
               plan: planId,
               planType: doc.plan.userType,
               payment: doc._id,
@@ -155,6 +158,11 @@ async function updateWallet(doc, res, payment) {
       await userModel.findOneAndUpdate({ bcCode: doc.addedByCode },
         { $inc: { wallet: bcAmount } }).exec();
     }
+
+    // Send Mail
+    const htmlMessage = mailScript.subscribedMail();
+    const subject = 'Achiever! It’s great to have you with us.';
+    mail.sendMail(doc.email, doc.name, subject, '', htmlMessage);
 
     return res.status(200).json({ message: 'Payment is successful', user: doc });
   }

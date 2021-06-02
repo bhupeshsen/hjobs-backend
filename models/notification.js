@@ -6,6 +6,7 @@ const schema = new Schema({
     type: Schema.ObjectId,
     required: true
   },
+  userType: {type: String},
   notifications: {
     title: {
       type: String,
@@ -23,4 +24,5 @@ const schema = new Schema({
   }
 });
 
-module.exports = mongoose.model('Notification', schema);
+const Notification = mongoose.model('Notification', schema);
+module.exports = { Notification }

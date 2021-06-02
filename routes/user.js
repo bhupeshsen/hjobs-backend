@@ -75,9 +75,9 @@ router.put('/photo', picUpload.single('photo'), isValidUser, (req, res) => {
   })
 })
 
-router.route('/add-document')
-  .put(docUpload.array('docs', 2), isValidUser, (req, res) => {
-    const id = req.user._id;
+router.route('/document')
+  .put(docUpload.any('docs', 2), isValidUser, (req, res) => {
+    const id = req.user.role == 'admin' ? req.query.id : req.user._id;
     const body = req.body;
     const docs = req.files;
     var files = [];
@@ -122,7 +122,7 @@ router.route('/add-document')
 
 router.route('/education')
   .post(isValidUser, (req, res) => {
-    const userId = req.user._id;
+    const userId = req.user.role == 'admin' ? req.query.id : req.user._id;
     const body = req.body;
 
     const update = { $push: { educations: body } };
@@ -132,7 +132,7 @@ router.route('/education')
       .exec((err, doc) => {
         if (err) return res.status(400).json(err);
         if (!doc) return res.status(404).json({ message: 'User not found!' });
-        res.status(200).json(doc);
+        res.status(200).json({ message: 'Education successfully updated!', user: doc });
       })
   })
   .delete(isValidUser, (req, res) => {
