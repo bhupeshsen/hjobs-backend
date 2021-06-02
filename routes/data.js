@@ -12,6 +12,17 @@ router.get('/pincode/:pincode', (req, res) => {
   res.status(200).json(data);
 })
 
+
+router.get('/districts', (req, res) => {
+  pincodeDirectory.find((err, doc) => {
+    if (err) return res.status(404).json({ message: 'not found!' })
+    var names = doc.map(function (item) {
+      return item['districtName'];
+    });
+    res.status(200).json(names);
+  }).sort({ districtName: 1 });
+});
+
 router.get('/ifsc/:code', (req, res) => {
   const code = req.params.code;
 
