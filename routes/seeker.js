@@ -48,6 +48,8 @@ router.get('/dashboard', isValidUser, (req, res) => {
 router.put('/profile', isValidUser, (req, res) => {
   const userId = req.user._id;
   var body = req.body;
+
+  console.log(body);
   body.seeker.status = true;
 
   const options = { new: true, safe: true, upsert: true };
@@ -175,14 +177,14 @@ router.route('/saved-company')
       if (err) return res.status(400).json(err);
       if (!user) return res.status(404).json(
         { message: 'User not found or already saved this company.' });
-      
+
       // send mail
       Company.findById({ _id: companyId }).exec((_, company) => {
         const htmlMessage = '';
         const subject = '';
         sendMail(company.officialEmail, company.name, subject, '', htmlMessage);
       })
-      
+
       res.status(200).json(user);
     });
 
