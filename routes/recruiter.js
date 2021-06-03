@@ -4,6 +4,7 @@ const ObjectId = require('mongodb').ObjectID;
 const path = require('path');
 const config = require('../config/config');
 const { Company } = require('../models/company');
+const fs = require('fs');
 const { User } = require('../models/user');
 const { Job } = require('../models/job');
 const Plan = require('../models/plan');
