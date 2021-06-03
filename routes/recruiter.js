@@ -208,7 +208,7 @@ router.get('/view-profile/:userId', isValidUser, (req, res) => {
       .populate({
         path: 'appliedBy.user',
         match: { _id: ObjectId(userId) },
-        select: 'name email mobile photo documents educations seeker'
+        select: 'name email mobile photo documents educations seeker address knownLanguages'
       })
       .exec((err, job) => {
         if (err) return res.status(400).json(err);
@@ -226,7 +226,7 @@ router.get('/view-profile/:userId', isValidUser, (req, res) => {
   } else {
     const filter = {
       name: 1, email: 1, mobile: 1, photo: 1,
-      documents: 1, educations: 1, seeker: 1
+      documents: 1, educations: 1, seeker: 1, address: 1, knownLanguages: 1
     };
 
     User.findById({ _id: userId }, filter).exec((err, user) => {
