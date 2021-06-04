@@ -16,7 +16,6 @@ const { } = require('../helper/mail-script');
 const router = express.Router();
 
 const storage = multer.diskStorage({
-
   destination: function (req, file, cb) {
     const path = 'public/images/company';
     fs.mkdirSync(path, { recursive: true });
