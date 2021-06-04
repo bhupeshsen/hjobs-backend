@@ -18,7 +18,6 @@ const docStorage = multer.diskStorage({
     cb(null, Date.now() + path.extname(file.originalname))
   }
 })
-
 const picStorage = multer.diskStorage({
   destination: function (req, file, cb) {
     const path = 'public/images/';
