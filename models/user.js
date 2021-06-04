@@ -2,7 +2,7 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 var bcrypt = require('bcryptjs');
 
-// aadhar, pan, resume,
+// Aadhar Card, Pan Card, Resume,
 const docSchema = new Schema({
   type: { type: String, trim: true },
   files: { type: Array, default: [] },

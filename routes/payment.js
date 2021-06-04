@@ -109,7 +109,6 @@ async function subscribe(body, user, res) {
         } else if (doc.plan.userType == 'resume' || doc.plan.userType == 'jobBranding') {
           update = {
             'recruiter.addOnPlans': {
-              type: doc.plan.userType,
               plan: planId,
               planType: doc.plan.userType,
               payment: doc._id,

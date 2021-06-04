@@ -1,6 +1,4 @@
 const express = require('express');
-
-var pincodeData = require('india-pincode-lookup/pincodes.json');
 const pincodeDirectory = require('india-pincode-lookup');
 const ifsc = require('ifsc');
 const { University, Qualification, Occupation, Sector, Skill,
@@ -14,7 +12,9 @@ router.get('/pincode/:pincode', (req, res) => {
   res.status(200).json(data);
 })
 
-
+router.get('/districts', (req, res) => {
+  
+});
 
 router.get('/ifsc/:code', (req, res) => {
   const code = req.params.code;

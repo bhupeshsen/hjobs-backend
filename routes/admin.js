@@ -394,6 +394,12 @@ router.route('/recruiter')
         res.status(200).json(companies);
       })
   })
+  .post(isValidUser, (req, res) => {
+    const user = req.body.user;
+    const company = req.body.company;
+
+    
+  })
 
 /// Local Hunar
 router.put('/video', isValidUser, (req, res) => {
@@ -611,6 +617,18 @@ router.route('/business/:user')
 
 /// Business Dashboard
 // router.get('/business/dashboard');
+
+/// Resume
+router.get('/resume', isValidUser, (req, res) => {
+  const query = { 'seeker.status': true, documents: { $elemMatch: { type: 'Resume' } } };
+  const filter = 'photo name mobile documents seeker.iAm seeker.prefWorkLocation seeker.desiredSalary';
+
+  User.find(query, filter)
+    .exec((err, users) => {
+      if (err) return res.status(400).json(err);
+      res.status(200).json(users);
+    });
+});
 
 /// Blogs
 router.route('/blog')

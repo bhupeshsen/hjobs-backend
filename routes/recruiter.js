@@ -2,9 +2,9 @@ const express = require('express');
 const multer = require('multer');
 const ObjectId = require('mongodb').ObjectID;
 const path = require('path');
+const fs = require('fs');
 const config = require('../config/config');
 const { Company } = require('../models/company');
-const fs = require('fs');
 const { User } = require('../models/user');
 const { Job } = require('../models/job');
 const Plan = require('../models/plan');
@@ -16,6 +16,7 @@ const { } = require('../helper/mail-script');
 const router = express.Router();
 
 const storage = multer.diskStorage({
+
   destination: function (req, file, cb) {
     const path = 'public/images/company';
     fs.mkdirSync(path, { recursive: true });
@@ -167,7 +168,7 @@ router.get('/dashboard', isValidUser, (req, res) => {
 router.put('/profile', isValidUser, (req, res) => {
   const userId = req.user.role == 'admin' ? req.query.id : req.user._id;
   var body = req.body;
-  body.recruiter.status = true;
+  body["recruiter.status"] = true;
 
   const options = { new: true, safe: true, upsert: true };
 
@@ -211,7 +212,7 @@ router.get('/view-profile/:userId', isValidUser, (req, res) => {
       .populate({
         path: 'appliedBy.user',
         match: { _id: ObjectId(userId) },
-        select: 'name email mobile photo documents educations seeker address knownLanguages dob gender'
+        select: 'name email mobile photo documents educations seeker'
       })
       .exec((err, job) => {
         if (err) return res.status(400).json(err);
@@ -229,7 +230,7 @@ router.get('/view-profile/:userId', isValidUser, (req, res) => {
   } else {
     const filter = {
       name: 1, email: 1, mobile: 1, photo: 1,
-      documents: 1, educations: 1, seeker: 1, address: 1, knownLanguages: 1, dob: 1, gender: 1
+      documents: 1, educations: 1, seeker: 1
     };
 
     User.findById({ _id: userId }, filter).exec((err, user) => {

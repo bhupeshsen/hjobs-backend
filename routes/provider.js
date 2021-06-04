@@ -29,7 +29,7 @@ let upload = multer({ storage: storage });
 router.put('/profile', isValidUser, (req, res) => {
   const userId = req.user._id;
   var body = req.body;
-  body.provider.status = true;
+  body["provider.status"] = true;
 
   const options = { new: true, safe: true, upsert: true };
 

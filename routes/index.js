@@ -63,14 +63,16 @@ router.get('/home', (req, res) => {
     // [7] Govt Jobs
     getGovtJobs(req, 6),
     // [8] All Jobs
-    getAllJobs(6)
+    getAllJobs(6),
+    // [9] Top Companies
+    getTopCompanies()
   ]).then(data => {
     res.status(200).json({
       plans: data[0], blogs: data[1],
       topCompanies: data[2], videos: data[3],
       latestJobs: data[4], gallery: images,
       totalCount: data[6][0],
-      govtJobs: data[7], allJobs: data[8]
+      govtJobs: data[7], allJobs: data[8], topCompanies: data[9]
     });
   }).catch(err => {
     res.status(400).json(err);
@@ -215,16 +217,9 @@ router.get('/local-hunar-videos', (req, res) => {
   })
 });
 
-router.get('/top-companies', (req, res) => {
-  User.find({ 'recruiter.addOnPlans.type': 'jobBranding' }).exec((err, companies) => {
-    if (err) return res.status(400).json(err);
-    res.status(200).json(companies);
-  })
-  // res.status(200).json([{
-  //   name: 'Snow Corporate',
-  //   logo: `/images/company/snow-corp.png`,
-  //   address: 'Sec-34, Rohini, North Delhi, Pin- 110039'
-  // }]);
+router.get('/top-companies', async (_, res) => {
+  const recruiters = await getTopCompanies();
+  res.status(200).json(recruiters);
 });
 
 router.get('/our-associates', (_, res) => {
@@ -430,6 +425,12 @@ const getAllJobs = (limit) => {
     .populate('postedBy', 'name logo')
     .sort({ createdAt: -1 })
     .limit(limit);
+}
+
+const getTopCompanies = () => {
+  return User
+    .find({ 'recruiter.addOnPlans.planType': 'jobBranding' }, '-_id recruiter.company')
+    .populate('recruiter.company', 'name logo address');
 }
 
 module.exports = router;
