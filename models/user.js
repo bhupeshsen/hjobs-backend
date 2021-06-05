@@ -142,6 +142,7 @@ const schema = new Schema({
     },
     pincode: String,
     district: String,
+    state: String,
     shopStatus: String,
     preferredWorkArea: [String],
     views: { type: Number, default: 0 },
