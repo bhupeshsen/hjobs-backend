@@ -136,8 +136,14 @@ const schema = new Schema({
     },
     experience: String,
     about: String,
-    availability: String,
-    preferredWorkArea: String,
+    availability: {
+      startTime: String,
+      endTime: String
+    },
+    pincode: String,
+    district: String,
+    shopStatus: String,
+    preferredWorkArea: [String],
     views: { type: Number, default: 0 },
     gallery: [String],
     services: [{ type: Schema.Types.ObjectId, ref: 'Service' }]
