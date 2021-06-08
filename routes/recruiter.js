@@ -292,6 +292,7 @@ router.route('/wishlist')
       })
   })
   .post(isValidUser, (req, res) => {
+
     const id = req.user._id;
     const userId = req.body.userId;
 
