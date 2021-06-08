@@ -72,7 +72,9 @@ router.route('/job')
 
     const currentDate = new Date();
     const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
+    const month = cur
+
+    rentDate.getMonth();
     const day = currentDate.getDate();
 
     Plan.findById({ _id: ObjectId(currentPlan) }, (err, doc) => {
@@ -302,7 +304,7 @@ router.route('/wishlist')
       // send mail
       const htmlMessage = '';
       const subject = '';
-      sendMail(user.email, user.name, subject, '', htmlMessage);
+     // sendMail(user.email, user.name, subject, '', htmlMessage);
     })
   })
 

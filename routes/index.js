@@ -439,8 +439,10 @@ const getTopCompanies = () => {
   return User
     .find({ 'recruiter.addOnPlans.planType': 'jobBranding' }, '-_id recruiter.company')
     .populate('recruiter.company', 'name logo address ')
-    .limit(6);;
+    .limit(6);
 }
+
+
 
 
 
