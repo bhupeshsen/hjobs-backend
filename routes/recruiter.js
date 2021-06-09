@@ -213,7 +213,7 @@ router.get('/view-profile/:userId', isValidUser, (req, res) => {
       .populate({
         path: 'appliedBy.user',
         match: { _id: ObjectId(userId) },
-        select: 'name email mobile photo documents educations seeker'
+        select: 'name email mobile photo documents educations seeker knownLanguages gender dob address'
       })
       .exec((err, job) => {
         if (err) return res.status(400).json(err);
