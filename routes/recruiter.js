@@ -67,14 +67,12 @@ router.route('/company')
 // DELETE /recruiter/job?jobId=<Job Id>
 router.route('/job')
   .post(isValidUser, (req, res) => {
-    const body = req.body;
+     const body = req.body;
     const currentPlan = body.currentPlan;
 
     const currentDate = new Date();
     const year = currentDate.getFullYear();
-    const month = cur
-
-    rentDate.getMonth();
+    const month = currentDate.getMonth();
     const day = currentDate.getDate();
 
     Plan.findById({ _id: ObjectId(currentPlan) }, (err, doc) => {
