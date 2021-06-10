@@ -101,9 +101,9 @@ router.route('/job')
       .populate('shortLists', 'name mobile email photo seeker.iAm seeker.desiredEmpType seeker.desiredJobType seeker.desiredSalary seeker.resume seeker.prefWorkLocation')
       .populate('hiredCandidates', 'name mobile email photo seeker.iAm seeker.desiredEmpType seeker.desiredJobType seeker.desiredSalary seeker.resume seeker.prefWorkLocation')
       .populate({
-        path: 'recruiter.wishlist',
+        path: 'user',
         match: { _id: ObjectId(companyId) },
-        select: 'name mobile email photo seeker.iAm seeker.desiredEmpType seeker.desiredJobType seeker.desiredSalary seeker.resume seeker.prefWorkLocation'
+        select: 'user.recruiter.wishlist'
       })
       .exec((err, doc) => {
         if (err) return res.status(400).json(err);
