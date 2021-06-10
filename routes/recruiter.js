@@ -98,8 +98,8 @@ router.route('/job')
 
     query
       .populate('appliedBy.user', 'name mobile email photo seeker.iAm seeker.desiredEmpType seeker.desiredJobType seeker.desiredSalary seeker.resume seeker.prefWorkLocation')
-      .populate('shortLists.user', 'name mobile email photo seeker.iAm seeker.desiredEmpType seeker.desiredJobType seeker.desiredSalary seeker.resume seeker.prefWorkLocation')
-      .populate('hiredCandidates.user', 'name mobile email photo seeker.iAm seeker.desiredEmpType seeker.desiredJobType seeker.desiredSalary seeker.resume seeker.prefWorkLocation')
+      .populate('shortLists', 'name mobile email photo seeker.iAm seeker.desiredEmpType seeker.desiredJobType seeker.desiredSalary seeker.resume seeker.prefWorkLocation')
+      .populate('hiredCandidates', 'name mobile email photo seeker.iAm seeker.desiredEmpType seeker.desiredJobType seeker.desiredSalary seeker.resume seeker.prefWorkLocation')
       .exec((err, doc) => {
         if (err) return res.status(400).json(err);
         if (!doc) return res.status(404).json({ message: 'Job not found!' });
