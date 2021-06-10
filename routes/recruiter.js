@@ -281,7 +281,6 @@ router.route('/hire')
 router.route('/wishlist')
   .get(isValidUser, (req, res) => {
     const id = req.user._id;
-
     User.findById({ _id: id }, 'recruiter')
       .populate('recruiter.wishlist', 'name email photo')
       .exec((err, user) => {
@@ -290,16 +289,12 @@ router.route('/wishlist')
       })
   })
   .post(isValidUser, (req, res) => {
-
     const id = req.user._id;
     const userId = req.body.userId;
-
     const update = { $addToSet: { 'recruiter.wishlist': ObjectId(userId) } };
-
     User.findByIdAndUpdate({ _id: id }, update).exec((err, _) => {
       if (err) return res.status(400).json(err);
       res.status(200).json({ message: 'Successfully added!' });
-
       // send mail
       const htmlMessage = '';
       const subject = '';
