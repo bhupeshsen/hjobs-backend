@@ -100,6 +100,11 @@ router.route('/job')
       .populate('appliedBy.user', 'name mobile email photo seeker.iAm seeker.desiredEmpType seeker.desiredJobType seeker.desiredSalary seeker.resume seeker.prefWorkLocation')
       .populate('shortLists', 'name mobile email photo seeker.iAm seeker.desiredEmpType seeker.desiredJobType seeker.desiredSalary seeker.resume seeker.prefWorkLocation')
       .populate('hiredCandidates', 'name mobile email photo seeker.iAm seeker.desiredEmpType seeker.desiredJobType seeker.desiredSalary seeker.resume seeker.prefWorkLocation')
+      .populate({
+        path: 'recruiter.wishlist',
+        match: { _id: ObjectId(userId) },
+        select: 'name mobile email photo seeker.iAm seeker.desiredEmpType seeker.desiredJobType seeker.desiredSalary seeker.resume seeker.prefWorkLocation'
+      })
       .exec((err, doc) => {
         if (err) return res.status(400).json(err);
         if (!doc) return res.status(404).json({ message: 'Job not found!' });
