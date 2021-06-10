@@ -273,7 +273,7 @@ router.route('/hire')
       // send mail
       const htmlMessage = '';
       const subject = '';
-      mail.sendMail(req.user.email, req.user.name, subject, '', htmlMessage);
+    //  mail.sendMail(req.user.email, req.user.name, subject, '', htmlMessage);
     })
   });
 
