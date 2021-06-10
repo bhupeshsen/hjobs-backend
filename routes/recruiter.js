@@ -102,7 +102,7 @@ router.route('/job')
       .populate('hiredCandidates', 'name mobile email photo seeker.iAm seeker.desiredEmpType seeker.desiredJobType seeker.desiredSalary seeker.resume seeker.prefWorkLocation')
       .populate({
         path: 'recruiter.wishlist',
-        match: { _id: ObjectId(userId) },
+        match: { _id: ObjectId(companyId) },
         select: 'name mobile email photo seeker.iAm seeker.desiredEmpType seeker.desiredJobType seeker.desiredSalary seeker.resume seeker.prefWorkLocation'
       })
       .exec((err, doc) => {
