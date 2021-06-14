@@ -20,7 +20,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 app.use(_cors({
-  origin: ['http://localhost:4200', 'http://hindustaanjobs.com','https://hindustaanjobs.com','https://job-admin-1b462.web.app', 'http://192.168.1.11:4200', 'http://192.168.29.166:4200'],
+  origin: ['http://localhost:4200','https://www.hindustaanjobs.com','https://job-admin-1b462.web.app', 'http://192.168.1.11:4200', 'http://192.168.29.166:4200'],
   // origin: ['http://www.hindustaanjobs.com', 'http://hindustaanjobs.com', 'http://jooglekar.com', 'http://www.jooglekar.com'],
   credentials: true
 }));
