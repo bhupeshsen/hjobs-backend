@@ -16,6 +16,7 @@ const { Blog } = require('../models/blog');
 const { FSE } = require('../models/business/fse');
 const { Advisor } = require('../models/business/advisor');
 const { BC, CM } = require('../models/business/business');
+const { Feedback } = require('../models/feedback');
 const Plan = require('../models/plan');
 const mail = require('../helper/mail');
 const states = require('../helper/states');
@@ -26,12 +27,19 @@ const privateKEY = fs.readFileSync(__dirname + '/../config/jwt.key', 'utf8');
 const issuer = 'admin.hindustaanjobs.com';        // Issuer
 const audience = 'hindustaanjobs.com';            // Audience
 
+const imagePath = 'public/images/';
+const recruiterPath = 'public/images/company/';
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const userType = req.params.user;
-    const path = `public/images/`;
-    fs.mkdirSync(path, { recursive: true });
-    cb(null, path)
+    fs.mkdirSync(imagePath, { recursive: true });
+    fs.mkdirSync(recruiterPath, { recursive: true });
+
+    if (file.fieldname === 'company[logo]') {
+      cb(null, recruiterPath);
+    } else {
+      cb(null, imagePath)
+    }
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + path.extname(file.originalname))
@@ -55,8 +63,17 @@ router.route('/token')
 
 router.get('/dashboard', isValidUser, (req, res) => {
   const role = req.user.role;
+  const time = req.query.time;
+
   const today = new Date();
-  const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  var lastDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+  var lastWeek = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
+  var lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+  var lastYear = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
+
+  const filterDate = time == 'Today' ? lastDay
+    : time == 'Week' ? lastWeek : time == 'Month' ? lastMonth
+      : time == 'Year' ? lastYear : undefined;
 
   User.aggregate([
     {
@@ -66,6 +83,7 @@ router.get('/dashboard', isValidUser, (req, res) => {
           {
             $project: {
               subscribed: { $cond: [{ $gte: ['$plan.expiryDate', new Date()] }, 1, 0] },
+              last: { $cond: [{ $gte: ['$createdAt', filterDate] }, 1, 0] }
             }
           }
         ],
@@ -183,7 +201,8 @@ router.get('/dashboard', isValidUser, (req, res) => {
         seeker: {
           total: { $size: '$_seeker' },
           unsubscribed: { $subtract: [{ $size: '$_seeker' }, { $sum: '$_seeker.subscribed' }] },
-          subscribed: { $sum: '$_seeker.subscribed' }
+          subscribed: { $sum: '$_seeker.subscribed' },
+          last: { $sum: '$_seeker.last' }
         },
         recruiter: {
           total: { $size: '$_recruiter' },
@@ -281,18 +300,20 @@ router.route('/govt-job')
 router.route('/job')
   .get(isValidUser, (_, res) => {
     const filter = 'name logo officialEmail phone address'
-    Job.find().populate('postedBy', filter).sort({ createdAt: -1 })
+    Job.find().populate('postedBy', filter)
+      .sort({ createdAt: -1 })
       .exec((err, jobs) => {
         if (err) return res.status(400).json(err);
         res.status(200).json(jobs);
-      })
+      });
   })
   .delete(isValidUser, (req, res) => {
     const jobId = req.query.id;
-    Job.findByIdAndDelete({ _id: jobId }).exec((err, _) => {
-      if (err) return res.status(400).json(err);
-      res.status(200).json({ message: 'Job successfully deleted!' });
-    });
+    Job.findByIdAndDelete({ _id: jobId })
+      .exec((err, _) => {
+        if (err) return res.status(400).json(err);
+        res.status(200).json({ message: 'Job successfully deleted!' });
+      });
   })
 
 /// User
@@ -373,6 +394,10 @@ router.put('/photo', upload.single('photo'), (req, res) => {
 })
 
 /// Recruiter
+const recUpload = upload.fields([
+  { name: 'user[photo]', maxCount: 1 },
+  { name: 'company[logo]', maxCount: 1 }
+]);
 router.route('/recruiter')
   .get(isValidUser, (req, res) => {
     Company.find()
@@ -394,12 +419,29 @@ router.route('/recruiter')
         res.status(200).json(companies);
       })
   })
-  .post(isValidUser, (req, res) => {
-    const user = req.body.user;
-    const company = req.body.company;
+  .post(isValidUser, recUpload, (req, res) => {
+    const body = req.body;
 
-    
-  })
+    const photo = req.files['user[photo]'];
+    const logo = req.files['company[logo]'];
+
+    if (photo != undefined && logo != undefined) {
+      body.user.photo = config.pathImages + photo[0].filename;
+      body.company.logo = config.pathCompany + logo[0].filename;
+    }
+
+    const user = new User(body.user);
+    user.save((err) => {
+      if (err) return res.status(400).json(err);
+      body.company.user = ObjectId(user._id);
+
+      const company = new Company(body.company);
+      company.save((err) => {
+        if (err) return res.status(400).json(err);
+        res.status(200).json({ message: 'Recruiter successfully added!' });
+      })
+    })
+  });
 
 /// Local Hunar
 router.put('/video', isValidUser, (req, res) => {
@@ -436,6 +478,11 @@ router.route('/business/:user')
   .get(isValidUser, (req, res) => {
     const user = req.params.user;
     const userId = req.query.id;
+    const date = new Date();
+    const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+    const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+    const startYear = new Date(date.getFullYear(), 0, 1);
+    const endYear = new Date(date.getFullYear(), 12, 0);
 
     const model = user == 'fse' ? FSE
       : user == 'ba' ? Advisor : user == 'bc' ? BC
@@ -447,7 +494,48 @@ router.route('/business/:user')
         res.status(200).json(users);
       });
     } else {
-      model.find().exec((err, users) => {
+      const code = `$${user}Code`;
+      model.aggregate([
+        {
+          $lookup: {
+            from: Payment.collection.name,
+            let: { code: code },
+            pipeline: [
+              { $match: { $expr: { $eq: ['$bcCode', '$$code'] } } },
+              {
+                $project: {
+                  month: {
+                    $cond: [{
+                      $and: [
+                        { $lte: ["$createdAt", lastDay] },
+                        { $gte: ["$createdAt", firstDay] }
+                      ]
+                    }, '$amount', 0]
+                  },
+                  year: {
+                    $cond: [{
+                      $and: [
+                        { $lte: ["$createdAt", endYear] },
+                        { $gte: ["$createdAt", startYear] }
+                      ]
+                    }, '$amount', 0]
+                  }
+                }
+              }
+            ],
+            as: 'payments'
+          }
+        },
+        {
+          $addFields: {
+            earning: {
+              month: { $sum: '$payments.month' },
+              year: { $sum: '$payments.year' }
+            }
+          }
+        },
+        { $project: { payments: 0 } }
+      ]).exec((err, users) => {
         if (err) return res.status(400).json(err);
         res.status(200).json(users);
       });
@@ -678,6 +766,18 @@ router.route('/blog')
         if (err) return res.status(400).json(err);
         res.status(200).json({ message: 'Blog successfully deleted!' });
       });
+  })
+
+/// Feedback
+router.route('/feedback')
+  .get(isValidUser, (_, res) => {
+    Feedback.find().exec((err, feedbacks) => {
+      if (err) return res.status(400).json(err);
+      res.status(200).json(feedbacks);
+    });
+  })
+  .post(isValidUser, (req, res) => {
+
   })
 
 // Generate BC Code     {MP0001}

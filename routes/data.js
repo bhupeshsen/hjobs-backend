@@ -109,7 +109,7 @@ router.get('/infrastructures', (req, res) => {
 });
 
 // Designation
-router.get('/designations', (req, res) => {
+router.get('/designations', (_, res) => {
   Designation.find({}, { _id: 0, name: 1 }, (err, doc) => {
     if (err) return res.status(400).json({ message: 'not found' });
     var names = doc.map(function (item) {

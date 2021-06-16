@@ -57,8 +57,11 @@ router.route('/dashboard')
                 provider: { $cond: [{ $eq: ['$provider.status', true] }, 1, 0] },
                 hunar: { $cond: [{ $eq: ['$hunar.status', true] }, 1, 0] },
                 subscriptions: {
-                  users: { $cond: [{ $gte: ['$plan.expiryDate', date] }, 1, 0] },
-                  recruiters: { $cond: [{ $gte: ['$recruiter.plan.expiryDate', date] }, 1, 0] }
+                  seeker: { $cond: [{ $and: [{ $gte: ['$plan.expiryDate', date] }, { $eq: ['$seeker.status', true] }] }, 1, 0] },
+                  customer: { $cond: [{ $and: [{ $gte: ['$plan.expiryDate', date] }, { $eq: ['$customer.status', true] }] }, 1, 0] },
+                  provider: { $cond: [{ $and: [{ $gte: ['$plan.expiryDate', date] }, { $eq: ['$provider.status', true] }] }, 1, 0] },
+                  hunar: { $cond: [{ $and: [{ $gte: ['$plan.expiryDate', date] }, { $eq: ['$hunar.status', true] }] }, 1, 0] },
+                  recruiter: { $cond: [{ $and: [{ $gte: ['$recruiter.plan.expiryDate', date] }, { $eq: ['$recruiter.status', true] }] }, 1, 0] },
                 }
               }
             }
@@ -80,8 +83,11 @@ router.route('/dashboard')
             hunar: { $sum: '$user.hunar' },
           },
           subscriptions: {
-            users: { $sum: '$user.subscriptions.users' },
-            recruiters: { $sum: '$user.subscriptions.recruiters' }
+            seekers: { $sum: '$user.subscriptions.seeker' },
+            customers: { $sum: '$user.subscriptions.customer' },
+            providers: { $sum: '$user.subscriptions.provider' },
+            hunars: { $sum: '$user.subscriptions.hunar' },
+            recruiters: { $sum: '$user.subscriptions.recruiter' }
           }
         }
       }

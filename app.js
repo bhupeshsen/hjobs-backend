@@ -20,7 +20,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 app.use(_cors({
-  origin: ['http://localhost:4200','https://www.hindustaanjobs.com','https://job-admin-1b462.web.app', 'http://192.168.1.11:4200', 'http://192.168.29.166:4200'],
+  origin: ['http://localhost:4200', 'http://192.168.29.110:4200', 'http://192.168.29.231:4200'],
   // origin: ['http://www.hindustaanjobs.com', 'http://hindustaanjobs.com', 'http://jooglekar.com', 'http://www.jooglekar.com'],
   credentials: true
 }));
@@ -92,6 +92,7 @@ mongoose.set('useFindAndModify', false);
 mongoose.set('useNewUrlParser', true);
 //mongoose.connect('mongodb://AdminJoogle:Gateway500#@127.0.0.1:27017/hindustaanJobs?authSource=admin');
 mongoose.connect('mongodb+srv://hJobs:1jygXxiJTyLTmyUr@cluster0.nnb1s.mongodb.net/hjobs?retryWrites=true&w=majority');
+// mongoose.connect('mongodb://localhost:27017/hjobs');
 const connection = mongoose.connection;
 connection.once('open', () => {
   console.log('MongoDB database connection established successfully!');

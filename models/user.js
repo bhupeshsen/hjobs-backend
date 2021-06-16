@@ -2,13 +2,14 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 var bcrypt = require('bcryptjs');
 
-// Aadhar Card, Pan Card, Resume,
+// Aadhar Card, Pan Card, Resume, Driving Licence, Voter Id
 const docSchema = new Schema({
   type: { type: String, trim: true },
   files: { type: Array, default: [] },
   number: { type: String, trim: true }
 });
 
+// type=> School, Graduation, Post Graduation, Diploma
 const eduSchema = new Schema({
   type: { type: String, trim: true },
   board: { type: String, trim: true },
@@ -67,6 +68,7 @@ const schema = new Schema({
   dob: { type: Date },
   gender: { type: String },
   address: {
+    address: String,
     state: String,
     city: String,
     locality: { type: String, trim: true },
@@ -136,15 +138,8 @@ const schema = new Schema({
     },
     experience: String,
     about: String,
-    availability: {
-      startTime: String,
-      endTime: String
-    },
-    pincode: String,
-    district: String,
-    state: String,
-    shopStatus: String,
-    preferredWorkArea: [String],
+    availability: String,
+    preferredWorkArea: String,
     views: { type: Number, default: 0 },
     gallery: [String],
     services: [{ type: Schema.Types.ObjectId, ref: 'Service' }]

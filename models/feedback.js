@@ -38,4 +38,5 @@ var schema = new Schema({
   }
 });
 
-module.exports = mongoose.model('Feedback', schema);
+const Feedback = mongoose.model('Feedback', schema);
+module.exports = { Feedback }

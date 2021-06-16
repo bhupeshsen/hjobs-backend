@@ -2,7 +2,6 @@ const express = require('express');
 const multer = require('multer');
 const ObjectId = require('mongodb').ObjectID;
 const path = require('path');
-const fs = require('fs');
 const config = require('../config/config');
 const { Company } = require('../models/company');
 const { User } = require('../models/user');
@@ -17,9 +16,7 @@ const router = express.Router();
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const path = 'public/images/company';
-    fs.mkdirSync(path, { recursive: true });
-    cb(null, path)
+    cb(null, 'public/images/company');
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + path.extname(file.originalname));
@@ -67,7 +64,7 @@ router.route('/company')
 // DELETE /recruiter/job?jobId=<Job Id>
 router.route('/job')
   .post(isValidUser, (req, res) => {
-     const body = req.body;
+    const body = req.body;
     const currentPlan = body.currentPlan;
 
     const currentDate = new Date();
@@ -211,7 +208,7 @@ router.get('/view-profile/:userId', isValidUser, (req, res) => {
       .populate({
         path: 'appliedBy.user',
         match: { _id: ObjectId(userId) },
-        select: 'name email mobile photo documents educations seeker knownLanguages gender dob address'
+        select: 'name email mobile photo documents educations seeker'
       })
       .exec((err, job) => {
         if (err) return res.status(400).json(err);
@@ -229,7 +226,7 @@ router.get('/view-profile/:userId', isValidUser, (req, res) => {
   } else {
     const filter = {
       name: 1, email: 1, mobile: 1, photo: 1,
-      documents: 1, educations: 1, seeker: 1,knownLanguages: 1, gender: 1, dob: 1, address: 1
+      documents: 1, educations: 1, seeker: 1
     };
 
     User.findById({ _id: userId }, filter).exec((err, user) => {
@@ -273,7 +270,7 @@ router.route('/hire')
       // send mail
       const htmlMessage = '';
       const subject = '';
-    //  mail.sendMail(req.user.email, req.user.name, subject, '', htmlMessage);
+      mail.sendMail(req.user.email, req.user.name, subject, '', htmlMessage);
     })
   });
 
@@ -281,6 +278,7 @@ router.route('/hire')
 router.route('/wishlist')
   .get(isValidUser, (req, res) => {
     const id = req.user._id;
+
     User.findById({ _id: id }, 'recruiter')
       .populate('recruiter.wishlist', 'name email photo')
       .exec((err, user) => {
@@ -291,14 +289,17 @@ router.route('/wishlist')
   .post(isValidUser, (req, res) => {
     const id = req.user._id;
     const userId = req.body.userId;
+
     const update = { $addToSet: { 'recruiter.wishlist': ObjectId(userId) } };
-    User.findByIdAndUpdate({ _id: id }, update).exec((err, _) => {
+
+    User.findByIdAndUpdate({ _id: id }, update).exec((err, user) => {
       if (err) return res.status(400).json(err);
       res.status(200).json({ message: 'Successfully added!' });
+
       // send mail
       const htmlMessage = '';
       const subject = '';
-     // sendMail(user.email, user.name, subject, '', htmlMessage);
+      sendMail(user.email, user.name, subject, '', htmlMessage);
     })
   })
 

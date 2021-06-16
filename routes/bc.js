@@ -23,11 +23,14 @@ let upload = multer({ storage: storage });
 router.route('/dashboard')
   .get(isValidUser, (req, res) => {
     const code = req.user.bcCode;
+    const wallet = req.user.wallet;
     const date = new Date();
     const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
     const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
     const startYear = new Date(date.getFullYear(), 0, 1);
     const endYear = new Date(date.getFullYear(), 12, 0);
+
+    console.log(wallet)
 
     Payment.aggregate([
       { $match: { $and: [{ bcCode: { $ne: null } }, { bcCode: code }] } },
@@ -57,6 +60,17 @@ router.route('/dashboard')
       },
       {
         $lookup: {
+          from: BC.collection.name,
+          let: {},
+          pipeline: [
+            { $match: { $expr: { $eq: ['$addedByCode', code] } } },
+            { $project: { _id: 1 } }
+          ],
+          as: 'bc'
+        }
+      },
+      {
+        $lookup: {
           from: User.collection.name,
           let: {},
           pipeline: [
@@ -69,8 +83,11 @@ router.route('/dashboard')
                 provider: { $cond: [{ $eq: ['$provider.status', true] }, 1, 0] },
                 hunar: { $cond: [{ $eq: ['$hunar.status', true] }, 1, 0] },
                 subscriptions: {
-                  users: { $cond: [{ $gte: ['$plan.expiryDate', date] }, 1, 0] },
-                  recruiters: { $cond: [{ $gte: ['$recruiter.plan.expiryDate', date] }, 1, 0] }
+                  seeker: { $cond: [{ $and: [{ $gte: ['$plan.expiryDate', date] }, { $eq: ['$seeker.status', true] }] }, 1, 0] },
+                  customer: { $cond: [{ $and: [{ $gte: ['$plan.expiryDate', date] }, { $eq: ['$customer.status', true] }] }, 1, 0] },
+                  provider: { $cond: [{ $and: [{ $gte: ['$plan.expiryDate', date] }, { $eq: ['$provider.status', true] }] }, 1, 0] },
+                  hunar: { $cond: [{ $and: [{ $gte: ['$plan.expiryDate', date] }, { $eq: ['$hunar.status', true] }] }, 1, 0] },
+                  recruiter: { $cond: [{ $and: [{ $gte: ['$recruiter.plan.expiryDate', date] }, { $eq: ['$recruiter.status', true] }] }, 1, 0] },
                 }
               }
             }
@@ -79,7 +96,13 @@ router.route('/dashboard')
         }
       },
       {
+        $addFields: {
+          wallet: wallet
+        }
+      },
+      {
         $project: {
+          wallet: 1,
           earning: {
             year: { $sum: '$yearPayments.amount' },
             month: { $sum: '$monthPayments.amount' }
@@ -90,16 +113,20 @@ router.route('/dashboard')
             customer: { $sum: '$user.customer' },
             provider: { $sum: '$user.provider' },
             hunar: { $sum: '$user.hunar' },
+            subBc: { $size: '$bc' }
           },
           subscriptions: {
-            users: { $sum: '$user.subscriptions.users' },
-            recruiters: { $sum: '$user.subscriptions.recruiters' }
+            seekers: { $sum: '$user.subscriptions.seeker' },
+            customers: { $sum: '$user.subscriptions.customer' },
+            providers: { $sum: '$user.subscriptions.provider' },
+            hunars: { $sum: '$user.subscriptions.hunar' },
+            recruiters: { $sum: '$user.subscriptions.recruiter' }
           }
         }
       }
     ]).exec((err, payments) => {
       if (err) return res.status(400).json(err);
-      if (payments.length == 0) return res.status(404).json({ message: 'Fse not found!' });
+      if (payments.length == 0) return res.status(404).json({ message: 'BC not found!' });
       res.status(200).json(payments[0]);
     });
   });
