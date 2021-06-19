@@ -192,7 +192,6 @@ router.get('/applied', isValidUser, (req, res) => {
 });
 
 // View Profile
-// View Profile
 router.get('/view-profile/:userId', isValidUser, (req, res) => {
   const userId = req.params.userId;
   const jobId = req.query.jobId;
@@ -227,7 +226,7 @@ router.get('/view-profile/:userId', isValidUser, (req, res) => {
   } else {
     const filter = {
       name: 1, email: 1, mobile: 1, photo: 1,
-      documents: 1, educations: 1, seeker: 1,dob: 1, address: 1 gender: 1, knownLanguages: 1
+      documents: 1, educations: 1, seeker: 1, dob: 1, address: 1, gender: 1, knownLanguages: 1
     };
 
     User.findById({ _id: userId }, filter).exec((err, user) => {
