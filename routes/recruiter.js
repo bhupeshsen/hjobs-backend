@@ -268,9 +268,9 @@ router.route('/hire')
       res.status(200).json(response);
 
       // send mail
-      const htmlMessage = '';
-      const subject = '';
-      mail.sendMail(req.user.email, req.user.name, subject, '', htmlMessage);
+    // const htmlMessage = '';
+    //  const subject = '';
+    //  mail.sendMail(req.user.email, req.user.name, subject, '', htmlMessage);
     })
   });
 
