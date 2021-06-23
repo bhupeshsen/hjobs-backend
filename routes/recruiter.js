@@ -386,7 +386,7 @@ router.route('/gallery')
 // Conversations
 router.route('/conversations')
   .get(isValidUser, (req, res) => {
-    const id = req.user._id;
+    const id = req.body.from;
 
     Conversation.find({ from: ObjectId(id) })
       .populate('to', 'name photo')
