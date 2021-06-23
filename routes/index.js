@@ -5,7 +5,7 @@ const { GovtJob } = require('../models/govt-job');
 const { Job } = require('../models/job');
 const { Blog } = require('../models/blog');
 const { Company } = require('../models/company');
-const {Feedback} = require('../models/feedback');
+const { Feedback } = require('../models/feedback');
 const FAQ = require('../models/feedback');
 const { User } = require('../models/user');
 const router = express.Router();
@@ -55,7 +55,7 @@ router.get('/home', (req, res) => {
       {
         title: 1, designation: 1, employmentType: 1,
         location: 1, skills: 1, salary: 1, deadline: 1, experience: 1
-      }).populate('postedBy', 'name logo -_id').exec(),
+      }).populate('postedBy', 'name logo -_id').limit(6).exec(),
     // [5] Gallery
     fs.readdirSync(_path).map(m => images.push(`gallery/${m}`)),
     // [6] Count
@@ -66,16 +66,15 @@ router.get('/home', (req, res) => {
     getAllJobs(6),
     // [9] Top Companies
     getTopCompanies(),
-
-    // [10]
-      getTopCoolWorkCompany()
+    //[10] Top cool place
+    getTopCoolWorkCompany()
   ]).then(data => {
     res.status(200).json({
       plans: data[0], blogs: data[1],
       topCompanies: data[2], videos: data[3],
       latestJobs: data[4], gallery: images,
       totalCount: data[6][0],
-      govtJobs: data[7], allJobs: data[8], topCompanies: data[9],topCoolPlace: data[10]
+      govtJobs: data[7], allJobs: data[8], topCompanies: data[9], topCoolPlace: data[10]
     });
   }).catch(err => {
     res.status(400).json(err);
@@ -444,6 +443,5 @@ const getTopCoolWorkCompany = () => {
     .populate('recruiter.company', 'name logo address createdAt')
     .limit(6);
 }
-
 
 module.exports = router;

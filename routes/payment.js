@@ -94,7 +94,7 @@ async function subscribe(body, user, res) {
         const duration = doc.plan.duration;
         const durationType = doc.plan.durationType;
 
-        const nextDate = (durationType === 'Month')
+        const nextDate = durationType == 'Month'
           ? new Date(year, month + duration, day)
           : new Date(year, month, day + duration);
 

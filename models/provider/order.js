@@ -1,6 +1,23 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
+const serviceSchema = new Schema({
+  categoryName: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  serviceName: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  price: {
+    type: Number,
+    required: true,
+  }
+}, { _id: false });
+
 const schema = new Schema({
   provider: {
     type: Schema.Types.ObjectId,
@@ -12,7 +29,7 @@ const schema = new Schema({
     ref: 'User',
     required: true
   },
-  services: [{ type: Schema.Types.ObjectId, ref: 'Service' }],
+  services: [serviceSchema],
   totalPrice: {
     type: Number,
     default: 0,

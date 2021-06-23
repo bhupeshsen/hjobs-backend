@@ -39,6 +39,10 @@ var schema = new Schema({
     type: String,
     trim: true
   },
+  durationType: {
+    type: String,
+    trim: true
+  },
   boost: {
     multiState: { type: Boolean, default: false },
     days: { type: Number, default: 0 }

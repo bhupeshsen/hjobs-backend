@@ -14,6 +14,7 @@ const schema = new Schema({
   },
   price: {
     type: Number,
+    default: 0,
     required: true,
   },
   user: {
@@ -24,6 +25,16 @@ const schema = new Schema({
     type: Boolean,
     default: true
   },
+  createdAt: {
+    type: Date,
+    default: Date.now(),
+    required: true
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now(),
+    required: true
+  }
 });
 
 const Service = mongoose.model('Service', schema);

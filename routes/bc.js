@@ -22,15 +22,13 @@ let upload = multer({ storage: storage });
 
 router.route('/dashboard')
   .get(isValidUser, (req, res) => {
-    const code = req.user.bcCode;
+    const code = req.user.role == 'admin' ? req.query.code : req.user.bcCode;
     const wallet = req.user.wallet;
     const date = new Date();
     const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
     const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
     const startYear = new Date(date.getFullYear(), 0, 1);
     const endYear = new Date(date.getFullYear(), 12, 0);
-
-    console.log(wallet)
 
     Payment.aggregate([
       { $match: { $and: [{ bcCode: { $ne: null } }, { bcCode: code }] } },
@@ -162,28 +160,24 @@ router.route('/profile')
     const photo = req.files['photo'];
 
     if (aadharF != undefined && aadharB != undefined) {
-      body.documents.aadharCard = {};
-      body.documents.aadharCard.aadharF = config.pathImages + aadharF[0].filename;
-      body.documents.aadharCard.aadharB = config.pathImages + aadharB[0].filename;
+      body['documents']['aadharCard']['aadharF'] = config.pathImages + aadharF[0].filename;
+      body['documents']['aadharCard']['aadharB'] = config.pathImages + aadharB[0].filename;
     }
 
     if (panCard != undefined) {
-      body.documents.panCard = {};
-      body.documents.panCard.image = config.pathImages + panCard[0].filename;
+      body['documents']['panCard']['image'] = config.pathImages + panCard[0].filename;
     }
 
     if (residential != undefined) {
-      body.documents.residentialProof = {};
-      body.documents.residentialProof.proofImage = config.pathImages + residential[0].filename;
+      body['documents']['residentialProof']['proofImage'] = config.pathImages + residential[0].filename;
     }
 
     if (bank != undefined) {
-      body.documents.bank = {};
-      body.documents.bank.passbook = config.pathImages + bank[0].filename;
+      body['documents']['bank']['passbook'] = config.pathImages + bank[0].filename;
     }
 
     if (photo != undefined) {
-      body.photo = config.pathImages + photo[0].filename
+      body['photo'] = config.pathImages + photo[0].filename
     }
 
     BC.findByIdAndUpdate({ _id: id }, body, options).exec((err, bc) => {

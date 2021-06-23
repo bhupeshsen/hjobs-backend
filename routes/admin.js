@@ -553,28 +553,25 @@ router.route('/business/:user')
     const photo = req.files['photo'];
 
     if (aadharF != undefined && aadharB != undefined) {
-      body.documents.aadharCard = {};
-      body.documents.aadharCard.aadharF = config.pathImages + aadharF[0].filename;
-      body.documents.aadharCard.aadharB = config.pathImages + aadharB[0].filename;
+      body['documents']['aadharCard']['aadharF'] = config.pathImages + aadharF[0].filename;
+      body['documents']['aadharCard']['aadharB'] = config.pathImages + aadharB[0].filename;
     }
 
     if (panCard != undefined) {
-      body.documents.panCard = {};
-      body.documents.panCard.image = config.pathImages + panCard[0].filename;
+      body['documents']['panCard']['image'] = config.pathImages + panCard[0].filename;
     }
 
     if (residential != undefined) {
-      body.documents.residentialProof = {};
-      body.documents.residentialProof.proofImage = config.pathImages + residential[0].filename;
+      body['documents']['residentialProof']['proofImage'] = config.pathImages + residential[0].filename;
     }
 
     if (bank != undefined) {
       body.documents.bank = {};
-      body.documents.bank.passbook = config.pathImages + bank[0].filename;
+      body['documents']['bank']['passbook'] = config.pathImages + bank[0].filename;
     }
 
     if (photo != undefined) {
-      body.photo = config.pathImages + photo[0].filename
+      body['photo'] = config.pathImages + photo[0].filename
     }
 
     const name = user == 'bc' ? body.name : body.firstName;
@@ -612,40 +609,7 @@ router.route('/business/:user')
     const user = req.params.user;
     const userId = req.query.id;
     const status = req.query.status;
-
     var update = {};
-
-    const aadharF = req.files['documents[aadharCard][aadharF]'];
-    const aadharB = req.files['documents[aadharCard][aadharB]'];
-    const panCard = req.files['documents[panCard][image]'];
-    const residential = req.files['documents[residentialProof][proofImage]'];
-    const bank = req.files['documents[bank][passbook]'];
-    const photo = req.files['photo'];
-
-    if (aadharF != undefined && aadharB != undefined) {
-      update.documents.aadharCard = {};
-      update.documents.aadharCard.aadharF = config.pathImages + aadharF[0].filename;
-      update.documents.aadharCard.aadharB = config.pathImages + aadharB[0].filename;
-    }
-
-    if (panCard != undefined) {
-      update.documents.panCard = {};
-      update.documents.panCard.image = config.pathImages + panCard[0].filename;
-    }
-
-    if (residential != undefined) {
-      update.documents.residentialProof = {};
-      update.documents.residentialProof.proofImage = config.pathImages + residential[0].filename;
-    }
-
-    if (bank != undefined) {
-      update.documents.bank = {};
-      update.documents.bank.passbook = config.pathImages + bank[0].filename;
-    }
-
-    if (photo != undefined) {
-      update.photo = config.pathImages + photo[0].filename
-    }
 
     const currentDate = new Date();
     const year = currentDate.getFullYear();
@@ -669,6 +633,35 @@ router.route('/business/:user')
       update[`${user}Code`] = `${codeType}${stateCode}${code}`;
     } else {
       update = req.body;
+    }
+
+    const aadharF = req.files['documents[aadharCard][aadharF]'];
+    const aadharB = req.files['documents[aadharCard][aadharB]'];
+    const panCard = req.files['documents[panCard][image]'];
+    const residential = req.files['documents[residentialProof][proofImage]'];
+    const bank = req.files['documents[bank][passbook]'];
+    const photo = req.files['photo'];
+
+    if (aadharF != undefined && aadharB != undefined) {
+      update['documents']['aadharCard']['aadharF'] = config.pathImages + aadharF[0].filename;
+      update['documents']['aadharCard']['aadharB'] = config.pathImages + aadharB[0].filename;
+    }
+
+    if (panCard != undefined) {
+      update['documents']['panCard']['image'] = config.pathImages + panCard[0].filename;
+    }
+
+    if (residential != undefined) {
+      update['documents']['residentialProof']['proofImage'] = config.pathImages + residential[0].filename;
+    }
+
+    if (bank != undefined) {
+      body.documents.bank = {};
+      update['documents']['bank']['passbook'] = config.pathImages + bank[0].filename;
+    }
+
+    if (photo != undefined) {
+      update['photo'] = config.pathImages + photo[0].filename
     }
 
     const model = user == 'fse' ? FSE

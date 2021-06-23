@@ -55,28 +55,24 @@ router.route('/profile')
     const photo = req.files['photo'];
 
     if (aadharF != undefined && aadharB != undefined) {
-      body.documents.aadharCard = {};
-      body.documents.aadharCard.aadharF = config.pathImages + aadharF[0].filename;
-      body.documents.aadharCard.aadharB = config.pathImages + aadharB[0].filename;
+      body['documents']['aadharCard']['aadharF'] = config.pathImages + aadharF[0].filename;
+      body['documents']['aadharCard']['aadharB'] = config.pathImages + aadharB[0].filename;
     }
 
     if (panCard != undefined) {
-      body.documents.panCard = {};
-      body.documents.panCard.image = config.pathImages + panCard[0].filename;
+      body['documents']['panCard']['image'] = config.pathImages + panCard[0].filename;
     }
 
     if (residential != undefined) {
-      body.documents.residentialProof = {};
-      body.documents.residentialProof.proofImage = config.pathImages + residential[0].filename;
+      body['documents']['residentialProof']['proofImage'] = config.pathImages + residential[0].filename;
     }
 
     if (bank != undefined) {
-      body.documents.bank = {};
-      body.documents.bank.passbook = config.pathImages + bank[0].filename;
+      body['documents']['bank']['passbook'] = config.pathImages + bank[0].filename;
     }
 
     if (photo != undefined) {
-      body.photo = config.pathImages + photo[0].filename
+      body['photo'] = config.pathImages + photo[0].filename
     }
 
     CM.findByIdAndUpdate({ _id: id }, body, options).exec((err, cm) => {

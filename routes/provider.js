@@ -170,7 +170,7 @@ router.route('/order')
     const model = orderId != undefined ? Order.findOne(query) : Order.find(query);
 
     model.populate('customer', filter)
-      .populate('services')
+      // .populate('services')
       .sort({ createdAt: -1 })
       .exec((err, order) => {
         if (err) return res.status(400).json(err);

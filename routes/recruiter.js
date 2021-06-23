@@ -266,10 +266,11 @@ router.route('/hire')
       if (err) return res.status(400).json(err);
       if (!job) return res.status(404).json({ message: 'Job not found!' });
       res.status(200).json(response);
+
       // send mail
-    // const htmlMessage = '';
-    //  const subject = '';
-    //  mail.sendMail(req.user.email, req.user.name, subject, '', htmlMessage);
+      const htmlMessage = '';
+      const subject = '';
+      sendMail(req.user.email, req.user.name, subject, '', htmlMessage);
     })
   });
 

@@ -48,11 +48,11 @@ router.route('/reset-password')
   })
   .post((req, res) => {
     const email = req.body.email;
+    const userType = req.body.userType;
 
     const token = jwt.sign({
-      _id: user._id,
-      email: user.email,
-      userType: user.userType
+      email: email,
+      userType: userType
     }, privateKEY, {
       issuer: issuer, audience: audience,
       algorithm: 'RS256', expiresIn: '24h'
@@ -243,25 +243,25 @@ router.post('/admin', (req, res, next) => {
 router.post('/provider/google', (req, res) => {
   const body = req.body;
 
-  User.findOneAndUpdate({ email: email },
-    { fcmToken: req.body.fcmToken },
-    { password: 0 }, (err, doc) => {
+  User.findOneAndUpdate({ email: body.email },
+    { fcmToken: req.body.fcmToken, 'verified.email': true },
+    { password: 0 }, (err, user) => {
       if (err) return res.status(400).json(err);
-      if (!doc) {
+      if (!user) {
         var referralCode = generateReferralCode();
 
-        const user = new User({
+        const doc = new User({
           name: body.name,
           email: body.email,
           mobile: body.mobile,
-          password: password,
+          photo: body.photo,
           referralCode: referralCode,
           provider: 'google',
           verified: { email: true },
           fcmToken: body.fcmToken
         });
 
-        saveData(user, res)
+        saveData(doc, res)
       }
 
       // JWT Token
@@ -362,7 +362,9 @@ var bcUpload = upload.fields([
 ]);
 router.post('/business/bc/register', bcUpload, (req, res) => {
   var body = req.body;
+  console.log(body);
   body.password = BC.hashPassword(body.password)
+  body.userType = 'bc';
 
   if (body.addedByCode === 'null') {
     body.addedByCode = null;
@@ -376,28 +378,25 @@ router.post('/business/bc/register', bcUpload, (req, res) => {
   const photo = req.files['photo'];
 
   if (aadharF != undefined && aadharB != undefined) {
-    body.documents.aadharCard = {};
-    body.documents.aadharCard.aadharF = config.pathImages + aadharF[0].filename;
-    body.documents.aadharCard.aadharB = config.pathImages + aadharB[0].filename;
+    body['documents']['aadharCard']['aadharF'] = config.pathImages + aadharF[0].filename;
+    body['documents']['aadharCard']['aadharB'] = config.pathImages + aadharB[0].filename;
   }
 
   if (panCard != undefined) {
-    body.documents.panCard = {};
-    body.documents.panCard.image = config.pathImages + panCard[0].filename;
+    body['documents']['panCard']['image'] = config.pathImages + panCard[0].filename;
   }
 
   if (residential != undefined) {
-    body.documents.residentialProof = {};
-    body.documents.residentialProof.proofImage = config.pathImages + residential[0].filename;
+    body['documents']['residentialProof']['proofImage'] = config.pathImages + residential[0].filename;
   }
 
   if (bank != undefined) {
     body.documents.bank = {};
-    body.documents.bank.passbook = config.pathImages + bank[0].filename;
+    body['documents']['bank']['passbook'] = config.pathImages + bank[0].filename;
   }
 
   if (photo != undefined) {
-    body.photo = config.pathImages + photo[0].filename
+    body['photo'] = config.pathImages + photo[0].filename
   }
 
   const bc = new BC(body);
