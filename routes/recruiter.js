@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const ObjectId = require('mongodb').ObjectID;
+const fs = require('fs');
 const path = require('path');
 const config = require('../config/config');
 const { Company } = require('../models/company');
@@ -15,13 +16,13 @@ const { } = require('../helper/mail-script');
 const router = express.Router();
 
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
+   destination: function (req, file, cb) {
     const path = 'public/images/company/';
     fs.mkdirSync(path, { recursive: true });
     cb(null, path)
   },
   filename: function (req, file, cb) {
-    cb(null, Date.now() + path.extname(file.originalname));
+    cb(null, Date.now() + path.extname(file.originalname))
   }
 });
 
@@ -406,8 +407,6 @@ router.route('/conversations/:userId')
   .get(isValidUser, (req, res) => {
     //const self = req.user._id;
     const self = req.body.from;
-
-
     const user = req.params.userId;
 
     Conversation.find({
