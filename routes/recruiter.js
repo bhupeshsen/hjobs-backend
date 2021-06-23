@@ -404,7 +404,10 @@ router.route('/conversations')
  * */
 router.route('/conversations/:userId')
   .get(isValidUser, (req, res) => {
-    const self = req.user._id;
+    //const self = req.user._id;
+    const self = req.body.from;
+
+
     const user = req.params.userId;
 
     Conversation.find({
