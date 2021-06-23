@@ -92,6 +92,7 @@ mongoose.set('useCreateIndex', true);
 mongoose.set('useFindAndModify', false);
 mongoose.set('useNewUrlParser', true);
 //mongoose.connect('mongodb://AdminJoogle:Gateway500#@127.0.0.1:27017/hindustaanJobs?authSource=admin');
+//mongodb+srv://hJobs:1jygXxiJTyLTmyUr@cluster0.nnb1s.mongodb.net/hindustaanjobs?retryWrites=true&w=majority live
 mongoose.connect('mongodb+srv://hJobs:1jygXxiJTyLTmyUr@cluster0.nnb1s.mongodb.net/hjobs?retryWrites=true&w=majority');
 // mongoose.connect('mongodb://localhost:27017/hjobs');
 const connection = mongoose.connection;

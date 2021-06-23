@@ -411,8 +411,8 @@ router.route('/conversations/:userId')
 
     Conversation.find({
       $or: [
-        { 'to': ObjectId(self) }, { 'from': ObjectId(self) },
-        { 'to': ObjectId(user) }, { 'from': ObjectId(user) }
+        { 'to': ObjectId(self) }, { 'from': ObjectId(user) },
+        { 'to': ObjectId(self) }, { 'from': ObjectId(user) }
       ]
     }).exec((err, conversations) => {
       if (err) return res.status(400).json(err);
