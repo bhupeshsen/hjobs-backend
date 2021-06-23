@@ -29,20 +29,24 @@ let upload = multer({ storage: storage });
 router.put('/profile', isValidUser, (req, res) => {
   const userId = req.user._id;
   var body = req.body;
+  console.log(body);
   body["provider.status"] = true;
 
   const options = { new: true, safe: true, upsert: true };
 
   User.findByIdAndUpdate({ _id: userId }, body, options)
     .exec((err, user) => {
-      if (err) return res.status(400).json(err);
+      if (err) {
+      console.log(err);
+      return res.status(400).json(err);}
+      console.log(err);
       if (!user) return res.status(404).json({ message: 'User not found!' });
       res.status(200).json({ message: 'Profile successfully updated!', user: user });
 
       // send mail
-      const htmlMessage = '';
-      const subject = '';
-      mail.sendMail(user.email, user.name, subject, '', htmlMessage);
+      //const htmlMessage = '';
+      //const subject = '';
+     // mail.sendMail(user.email, user.name, subject, '', htmlMessage);
     });
 });
 

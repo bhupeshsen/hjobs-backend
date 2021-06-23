@@ -32,7 +32,6 @@ const picStorage = multer.diskStorage({
 
 let docUpload = multer({ storage: docStorage });
 let picUpload = multer({ storage: picStorage });
-
 router.route('/profile')
   .get(isValidUser, (req, res) => {
     const id = req.user._id;

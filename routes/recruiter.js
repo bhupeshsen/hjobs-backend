@@ -418,7 +418,9 @@ router.route('/conversations/:userId')
     });
   })
   .post(isValidUser, (req, res) => {
-    const from = req.user._id;
+    const from = req.body.from;
+
+  //  const from = req.user._id;
     const to = req.params.userId;
     const message = req.body.message;
 
