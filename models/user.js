@@ -136,6 +136,7 @@ const schema = new Schema({
       type: { type: String },
       disabilityType: { type: String }
     },
+    shopStatus:String,
     experience: String,
     about: String,
     availability: String,
